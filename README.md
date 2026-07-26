@@ -1,6 +1,6 @@
-# 🧬 IVF Pregnancy Success Prediction (LG Aimers 5th Hackathon)
+# IVF Pregnancy Success Prediction (LG Aimers 6th Hackathon)
 
-## 📌 Project Background & Overview
+## Project Background & Overview
 
 **The Challenge**
 Infertility is a growing global health issue, placing significant physical, emotional, and financial burdens on couples. For patients undergoing fertility treatments, minimizing the number of procedures while maximizing the chances of pregnancy is highly critical. 
@@ -11,7 +11,7 @@ To address these challenges, healthcare institutions are increasingly turning to
 **Hackathon Objective**
 Developed for the LG Aimers Hackathon, this project focuses on building an AI model to predict "Pregnancy Success" using real-world infertility patient data. The primary goal is to identify the optimal features that determine pregnancy outcomes and construct a robust predictive model. Through this data-driven approach, we aim to explore innovative ways to enhance the overall efficiency of infertility treatments.
 
-## 📁 Repository Structure
+## Repository Structure
 ```text
 ├── data/               # Raw and preprocessed data (Excluded via .gitignore)
 ├── notebooks/          # Jupyter notebooks for EDA and initial experiments
@@ -24,13 +24,13 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 └── README.md           # Project documentation
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 - **Data Processing & EDA**: `pandas`, `numpy`, `matplotlib`, `seaborn`
 - **Machine Learning (Ensemble)**: `XGBoost`, `CatBoost`, `LightGBM`
 - **Deep Learning**: `PyTorch` (MPS acceleration for macOS)
 - **Optimization**: `Optuna`
 
-## 💡 Key Engineering Strategies
+## Key Engineering Strategies
 1. **Domain-Knowledge Feature Engineering**
    - **Success Rate per Attempt**: Derived a new feature calculating the pregnancy success rate based on the total number of procedures and previous pregnancies.
    - **Age-Group Mapping**: Mapped the average pregnancy success rate by age group to capture demographic patterns.
@@ -40,7 +40,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 3. **Hyperparameter Optimization**
    - Utilized **Optuna** to fine-tune critical parameters such as tree depth (`max_depth`) and iterations, maximizing predictive performance.
 
-## 🚀 How to Run
+## How to Run
 ```bash
 git clone https://github.com/soonjae-dev/ivf-pregnancy-prediction.git
 cd ivf-pregnancy-prediction
