@@ -1,17 +1,13 @@
-# Data files
+# Data & Model weights
 data/
-*.csv
-*.xlsx
-
-# Model weights
 models/
+*.csv
 *.pt
 *.cbm
-*.pkl
 
 # Python environments & caches
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
 .env
-venv/
