@@ -1,10 +1,12 @@
-pandas
 numpy
+pandas
 scikit-learn
 matplotlib
 seaborn
+torch
+skorch
+imbalanced-learn
 xgboost
 lightgbm
 catboost
 optuna
-torch
