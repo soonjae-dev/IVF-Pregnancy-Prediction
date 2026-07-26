@@ -1,0 +1,12 @@
+{
+  "combo": [
+    32,
+    4
+  ],
+  "num_layers": 2,
+  "ff_hidden_dim": 96,
+  "dropout": 0.2,
+  "lr": 0.0009123801854217968,
+  "max_epochs": 30,
+  "best_value": 0.8186656535848391
+}
