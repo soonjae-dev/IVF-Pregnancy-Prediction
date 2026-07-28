@@ -4,8 +4,9 @@ Main Pipeline Execution Script (main.py)
 ===============================================================================
 """
 
+import json
 import pandas as pd
-from src.logger import logger  # Import the custom logger
+from src.logger import logger
 from src.config import set_seed, get_device
 from src.preprocessing import run_basic_preprocessing
 from src.features import run_feature_engineering
@@ -27,17 +28,31 @@ import lightgbm as lgb
 from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
 
+def load_config(config_path: str = "configs/config.json") -> dict:
+    """
+    Load pipeline configurations from a JSON file.
+    """
+    with open(config_path, "r", encoding="utf-8") as file:
+        return json.load(file)
+
 def main():
     logger.info("========== Pipeline Execution Started ==========")
     
+    # 0. Load Configuration
+    logger.info("[0] Loading configurations...")
+    config = load_config()
+    
     # 1. Environment Setup
     logger.info("[1] Setting up environment...")
-    set_seed(42)
+    set_seed(config["pipeline"]["seed"])
     device = get_device()
     
     # 2. Data Loading & Basic Preprocessing
     logger.info("[2] Loading data and basic preprocessing...")
-    train_df, test_df, test_ids = run_basic_preprocessing('data/train.csv', 'data/test.csv')
+    train_df, test_df, test_ids = run_basic_preprocessing(
+        config["pipeline"]["train_data_path"], 
+        config["pipeline"]["test_data_path"]
+    )
     
     # 3. Feature Engineering
     logger.info("[3] Feature Engineering...")
@@ -53,7 +68,10 @@ def main():
     
     # 6. Missing Value Imputation (GAIN)
     logger.info("[6] Imputing Missing Values with GAIN...")
-    train_df, test_df = run_gain_on_dataframes(train_df, test_df, device, iterations=1000)
+    train_df, test_df = run_gain_on_dataframes(
+        train_df, test_df, device, 
+        iterations=config["imputation"]["gain_iterations"]
+    )
     
     # 7. Data Splitting & Resampling (SMOTE)
     logger.info("[7] Splitting Data & Applying SMOTE...")
@@ -61,10 +79,11 @@ def main():
     
     # 8. Hyperparameter Optimization
     logger.info("[8] Optimizing Hyperparameters...")
-    best_xgb, _ = optimize_xgboost(X_train_sm, y_train_sm, rskf, n_trials=10)
-    best_lgb, _ = optimize_lightgbm(X_train_sm, y_train_sm, rskf, n_trials=10)
-    best_rf, _ = optimize_random_forest(X_train_sm, y_train_sm, rskf, n_trials=10)
-    best_cat, _ = optimize_catboost(X_train_sm, y_train_sm, rskf, n_trials=10)
+    n_trials = config["optimization"]["n_trials"]
+    best_xgb, _ = optimize_xgboost(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
+    best_lgb, _ = optimize_lightgbm(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
+    best_rf, _ = optimize_random_forest(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
+    best_cat, _ = optimize_catboost(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
     
     # 9. Ensemble Modeling
     logger.info("[9] Building Ensembles...")
@@ -78,16 +97,35 @@ def main():
     # 9.2 Weighted Ensemble
     weights, val_auc_ens, val_ens_proba = optimize_weighted_ensemble(
         X_train_sm, y_train_sm, X_val, y_val,
-        best_xgb, best_lgb, best_rf, best_cat, n_trials=20
+        best_xgb, best_lgb, best_rf, best_cat, 
+        n_trials=config["optimization"]["ensemble_trials"]
     )
     best_thresh_w, _, _ = optimize_threshold_and_evaluate(y_val, val_ens_proba, "Weighted Ensemble")
     
     # 10. Final Prediction & Submission
     logger.info("[10] Generating Submission Files...")
-    xgb_model = xgb.XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss', **best_xgb).fit(X_train_sm, y_train_sm)
-    lgb_model = lgb.LGBMClassifier(random_state=42, **best_lgb).fit(X_train_sm, y_train_sm)
-    rf_model = RandomForestClassifier(random_state=42, **best_rf).fit(X_train_sm, y_train_sm)
-    cat_model = cb.CatBoostClassifier(random_state=42, verbose=0, **best_cat).fit(X_train_sm, y_train_sm)
+    xgb_model = xgb.XGBClassifier(
+        random_state=config["pipeline"]["seed"], 
+        use_label_encoder=False, 
+        eval_metric='logloss', 
+        **best_xgb
+    ).fit(X_train_sm, y_train_sm)
+    
+    lgb_model = lgb.LGBMClassifier(
+        random_state=config["pipeline"]["seed"], 
+        **best_lgb
+    ).fit(X_train_sm, y_train_sm)
+    
+    rf_model = RandomForestClassifier(
+        random_state=config["pipeline"]["seed"], 
+        **best_rf
+    ).fit(X_train_sm, y_train_sm)
+    
+    cat_model = cb.CatBoostClassifier(
+        random_state=config["pipeline"]["seed"], 
+        verbose=0, 
+        **best_cat
+    ).fit(X_train_sm, y_train_sm)
     
     generate_submissions(
         stacking_clf, xgb_model, lgb_model, rf_model, cat_model,
