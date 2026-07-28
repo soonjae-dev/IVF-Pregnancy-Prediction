@@ -1,12 +1,16 @@
-numpy
-pandas
-scikit-learn
-matplotlib
-seaborn
-torch
-skorch
-imbalanced-learn
-xgboost
-lightgbm
-catboost
-optuna
+# Data Manipulation
+pandas==2.2.1
+numpy==1.26.4
+
+# Machine Learning & Deep Learning
+scikit-learn==1.4.1.post1
+xgboost==2.0.3
+lightgbm==4.3.0
+catboost==1.2.5
+torch==2.2.1
+
+# Hyperparameter Optimization
+optuna==3.6.1
+
+# Imbalanced Data Handling
+imbalanced-learn==0.12.0
