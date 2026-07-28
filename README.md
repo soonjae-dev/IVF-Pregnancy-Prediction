@@ -13,15 +13,25 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 
 ## Repository Structure
 ```text
-├── data/               # Raw and preprocessed data (Excluded via .gitignore)
-├── notebooks/          # Jupyter notebooks for EDA and initial experiments
-├── src/                # Modularized Python scripts
-│   ├── preprocessing.py# Data loading and missing value imputation
-│   ├── features.py     # Domain-based feature engineering
-│   └── train.py        # Model training and Optuna optimization
-├── models/             # Saved model weights
-├── requirements.txt    # Project dependencies
-└── README.md           # Project documentation
+├── configs/               # Hyperparameters and experiment configurations
+├── data/                  # Raw dataset (Download from Dacon, ignored by git)
+├── notebooks/             # Initial EDA and experiment notebook
+├── src/                   # Core pipeline modules
+│   ├── __init__.py
+│   ├── config.py          # Environment setup, seed fixing, and device config (MPS/CUDA/CPU)
+│   ├── preprocessing.py   # Data loading and basic preprocessing
+│   ├── features.py        # Domain-based feature engineering (e.g., success rates)
+│   ├── feature_selection.py # Correlation-based feature dropping
+│   ├── encoding.py        # One-Hot encoding and train/test column synchronization
+│   ├── gain_imputer.py    # PyTorch implementation of GAIN for missing values
+│   ├── run_imputation.py  # Wrapper for GAIN execution
+│   ├── data_splitting.py  # Train/Val split and SMOTE application
+│   ├── optimization.py    # Hyperparameter tuning using Optuna
+│   ├── ensemble.py        # Stacking and Weighted Ensemble logic
+│   └── evaluation.py      # F1 threshold optimization and submission generation
+├── main.py                # Main execution script
+├── requirements.txt       # Project dependencies
+└── .gitignore
 ```
 
 ## Tech Stack
@@ -31,14 +41,11 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 - **Optimization**: `Optuna`
 
 ## Key Engineering Strategies
-1. **Domain-Knowledge Feature Engineering**
-   - **Success Rate per Attempt**: Derived a new feature calculating the pregnancy success rate based on the total number of procedures and previous pregnancies.
-   - **Age-Group Mapping**: Mapped the average pregnancy success rate by age group to capture demographic patterns.
-2. **Handling Missing Values & Imbalance**
-   - **Imputation**: Replaced non-informative missing values with `-1` to reduce noise.
-   - **Class Imbalance**: Applied `scale_pos_weight: 2.0` (in XGBoost) and equivalent techniques to heavily weight the positive class (pregnancy success).
-3. **Hyperparameter Optimization**
-   - Utilized **Optuna** to fine-tune critical parameters such as tree depth (`max_depth`) and iterations, maximizing predictive performance.
+- **Domain-Knowledge Feature Engineering**: Derived a new feature calculating the pregnancy success rate based on the total number of procedures and previous pregnancies. Also mapped the average pregnancy success rate by age group using target encoding to capture demographic patterns.
+- **Advanced Missing Value Imputation**: Implemented Generative Adversarial Imputation Nets (GAIN) using PyTorch to recover missing values realistically, upgrading from standard constant imputation.
+- **Imbalanced Data Handling**: Applied SMOTE strictly on the training set to resolve class imbalance and oversample the positive class, carefully structured to prevent data leakage into the validation set.
+- **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for tree-based models (XGBoost, LightGBM, RandomForest, CatBoost) and a deep learning model (TabTransformer).
+- **Ensemble Strategy**: Maximized predictive performance by combining predictions through a Stacking Classifier and an Optuna-optimized Weighted Ensemble, targeting the optimal F1 threshold.
 
 ## How to Run
 ```bash
@@ -48,5 +55,5 @@ pip install -r requirements.txt
 python src/train.py
 ```
 
-## 👤 Author
+## Author
 - **Lee Soon-jae** ([@soonjae-dev](https://github.com/soonjae-dev))
