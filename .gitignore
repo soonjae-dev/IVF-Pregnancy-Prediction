@@ -11,3 +11,7 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 .env
+
+# Logs
+logs/
+*.log
