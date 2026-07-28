@@ -1,0 +1,14 @@
+{
+    "pipeline": {
+        "seed": 42,
+        "train_data_path": "data/train.csv",
+        "test_data_path": "data/test.csv"
+    },
+    "imputation": {
+        "gain_iterations": 1000
+    },
+    "optimization": {
+        "n_trials": 10,
+        "ensemble_trials": 20
+    }
+}
