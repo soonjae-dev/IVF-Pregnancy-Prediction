@@ -1,5 +1,14 @@
 # IVF Pregnancy Success Prediction (LG Aimers 6th Hackathon)
 
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=flat&logo=scikit-learn&logoColor=white)
+![Optuna](https://img.shields.io/badge/Optuna-blue?style=flat&logo=optuna&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+Machine learning pipeline for the Dacon IVF Pregnancy Success Prediction competition. 
+This repository refactors the initial single-file Jupyter Notebook experiments into a modular, production-ready structure.
+
 ## Project Background & Overview
 
 **The Challenge**
