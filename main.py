@@ -78,12 +78,14 @@ def main():
     X_train, X_val, y_train, y_val, X_train_sm, y_train_sm, rskf = prepare_training_data(train_df)
     
     # 8. Hyperparameter Optimization
+    # NOTE: 원본(리샘플링 전) 학습 데이터를 넘긴다. SMOTE는 optimization.py의
+    #       imblearn Pipeline 안에서 각 CV 폴드의 학습 부분에만 적용된다.
     logger.info("[8] Optimizing Hyperparameters...")
     n_trials = config["optimization"]["n_trials"]
-    best_xgb, _ = optimize_xgboost(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
-    best_lgb, _ = optimize_lightgbm(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
-    best_rf, _ = optimize_random_forest(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
-    best_cat, _ = optimize_catboost(X_train_sm, y_train_sm, rskf, n_trials=n_trials)
+    best_xgb, _ = optimize_xgboost(X_train, y_train, rskf, n_trials=n_trials)
+    best_lgb, _ = optimize_lightgbm(X_train, y_train, rskf, n_trials=n_trials)
+    best_rf, _ = optimize_random_forest(X_train, y_train, rskf, n_trials=n_trials)
+    best_cat, _ = optimize_catboost(X_train, y_train, rskf, n_trials=n_trials)
     
     # 9. Ensemble Modeling
     logger.info("[9] Building Ensembles...")
