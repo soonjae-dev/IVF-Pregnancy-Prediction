@@ -26,7 +26,7 @@ from sklearn.model_selection import learning_curve
 def optimize_threshold_and_evaluate(
     y_val: np.ndarray,
     val_pred_proba: np.ndarray,
-    model_name: String = "Model"
+    model_name: str = "Model"
 ) -> Tuple[float, float, np.ndarray]:
     """
     Find the optimal classification threshold that maximizes F1-score based on 

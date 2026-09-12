@@ -16,7 +16,8 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, Tuple
 
-from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline  # SMOTE를 CV 폴드 내부에서 적용하기 위해 imblearn 사용
+from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from skorch import NeuralNetClassifier
@@ -39,7 +40,7 @@ def get_device() -> torch.device:
     return device
 
 
-def optimize_xgboost(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
+def optimize_xgboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for XGBoost using Optuna.
     """
@@ -59,9 +60,10 @@ def optimize_xgboost(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_tri
         )
         pipe = Pipeline([
             ('scaler', StandardScaler()),
+            ('smote', SMOTE(random_state=42)),
             ('xgb', xgb_model)
         ])
-        scores = cross_val_score(pipe, X_train_sm, y_train_sm, cv=rskf, scoring='roc_auc', n_jobs=-1)
+        scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
         return scores.mean()
 
     print("[INFO] Starting Optuna tuning for XGBoost...")
@@ -74,7 +76,7 @@ def optimize_xgboost(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_tri
     return study_xgb.best_params, study_xgb.best_value
 
 
-def optimize_lightgbm(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
+def optimize_lightgbm(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for LightGBM using Optuna.
     """
@@ -90,9 +92,10 @@ def optimize_lightgbm(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_tr
         lgb_model = lgb.LGBMClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
+            ('smote', SMOTE(random_state=42)),
             ('lgb', lgb_model)
         ])
-        scores = cross_val_score(pipe, X_train_sm, y_train_sm, cv=rskf, scoring='roc_auc', n_jobs=-1)
+        scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
         return scores.mean()
 
     print("[INFO] Starting Optuna tuning for LightGBM...")
@@ -105,7 +108,7 @@ def optimize_lightgbm(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_tr
     return study_lgb.best_params, study_lgb.best_value
 
 
-def optimize_random_forest(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
+def optimize_random_forest(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for RandomForest using Optuna.
     """
@@ -120,9 +123,10 @@ def optimize_random_forest(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf,
         rf_model = RandomForestClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
+            ('smote', SMOTE(random_state=42)),
             ('rf', rf_model)
         ])
-        scores = cross_val_score(pipe, X_train_sm, y_train_sm, cv=rskf, scoring='roc_auc', n_jobs=-1)
+        scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
         return scores.mean()
 
     print("[INFO] Starting Optuna tuning for RandomForest...")
@@ -135,7 +139,7 @@ def optimize_random_forest(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf,
     return study_rf.best_params, study_rf.best_value
 
 
-def optimize_catboost(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
+def optimize_catboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for CatBoost using Optuna.
     """
@@ -151,9 +155,10 @@ def optimize_catboost(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, n_tr
         cat_model = cb.CatBoostClassifier(random_state=42, verbose=0, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
+            ('smote', SMOTE(random_state=42)),
             ('cat', cat_model)
         ])
-        scores = cross_val_score(pipe, X_train_sm, y_train_sm, cv=rskf, scoring='roc_auc', n_jobs=-1)
+        scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
         return scores.mean()
 
     print("[INFO] Starting Optuna tuning for CatBoost...")
@@ -263,7 +268,7 @@ class TabTransformer(nn.Module):
         return logits
 
 
-def optimize_tab_transformer(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rskf, device: torch.device, n_trials: int = 10) -> Tuple[Dict[str, Any], float]:
+def optimize_tab_transformer(X_train: np.ndarray, y_train: np.ndarray, rskf, device: torch.device, n_trials: int = 10) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for TabTransformer using Optuna and Skorch.
     """
@@ -289,7 +294,7 @@ def optimize_tab_transformer(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rsk
 
         net = NeuralNetClassifier(
             module=TabTransformer,
-            module__num_features=X_train_sm.shape[1],
+            module__num_features=X_train.shape[1],
             module__embed_dim=embed_dim,
             module__num_heads=num_heads,
             module__num_layers=num_layers,
@@ -309,12 +314,13 @@ def optimize_tab_transformer(X_train_sm: np.ndarray, y_train_sm: np.ndarray, rsk
 
         pipe = Pipeline([
             ('scaler', StandardScaler()),
+            ('smote', SMOTE(random_state=42)),
             ('tab', net)
         ])
 
         scores = cross_val_score(
             pipe,
-            X_train_sm, y_train_sm,
+            X_train, y_train,
             cv=rskf,
             scoring='roc_auc',
             n_jobs=-1
