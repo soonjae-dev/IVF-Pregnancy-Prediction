@@ -78,8 +78,9 @@ def main():
     X_train, X_val, y_train, y_val, X_train_sm, y_train_sm, rskf = prepare_training_data(train_df)
     
     # 8. Hyperparameter Optimization
-    # NOTE: 원본(리샘플링 전) 학습 데이터를 넘긴다. SMOTE는 optimization.py의
-    #       imblearn Pipeline 안에서 각 CV 폴드의 학습 부분에만 적용된다.
+    # NOTE: pass the ORIGINAL (un-resampled) training data. SMOTE is applied
+    #       inside optimization.py's imblearn Pipeline, to the training portion
+    #       of each CV fold only.
     logger.info("[8] Optimizing Hyperparameters...")
     n_trials = config["optimization"]["n_trials"]
     best_xgb, _ = optimize_xgboost(X_train, y_train, rskf, n_trials=n_trials)

@@ -239,6 +239,6 @@
     "oof_auc": 0.7303920542582373,
     "oof_f1": 0.5068122610713531,
     "threshold": 0.2810972955012104,
-    "note": "가중치와 임계값 모두 OOF 확률에서 골랐으므로 개별 모델 수치보다 낙관적임"
+    "note": "weights and threshold were both selected on the out-of-fold probabilities, so this is optimistic relative to the individual models"
   }
 }
