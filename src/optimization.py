@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, Tuple
 
-from imblearn.pipeline import Pipeline  # SMOTE를 CV 폴드 내부에서 적용하기 위해 imblearn 사용
+from imblearn.pipeline import Pipeline  # imblearn, so SMOTE runs inside each CV fold
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
