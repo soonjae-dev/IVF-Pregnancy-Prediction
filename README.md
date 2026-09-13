@@ -343,8 +343,9 @@ written to `configs/`. That separation is the whole design — a search returns
 the best of everything it tried, and that maximum is inflated by however many
 things it tried, so it cannot be compared against an incumbent's single score.
 
-On the referee split, with 164 completed LightGBM trials, 121 XGBoost, and
-around 50 each for RandomForest and CatBoost:
+On the referee split, with 164 completed LightGBM trials, 121 XGBoost, and 26
+and 23 for RandomForest and CatBoost — those two are slower per trial, and about
+40% of all trials were pruned on top of that:
 
 | Model | leaky-protocol params | re-tuned | Δ AUC |
 |---|---|---|---|
@@ -353,8 +354,13 @@ around 50 each for RandomForest and CatBoost:
 | LightGBM | 0.7323 | 0.7406 | +0.0083 |
 | RandomForest | 0.7336 | 0.7352 | +0.0016 |
 
-All four were adopted. The published figures at the top of this section are
-measured on the result.
+All four were adopted, and the published figures at the top of Results are
+measured on the outcome.
+
+This particular table cannot be re-run. Once the tuned parameters are in
+`configs/`, they *are* the incumbent, so `validate_tuning.py` compares them
+against themselves. It is a one-time measurement, and `tuning/referee.json`
+holds the run that made the decision.
 
 Two things are worth reading off that table. The first is that the leaky search
 did not merely justify itself with a wrong number — it picked the wrong
@@ -365,9 +371,9 @@ differences between model families was mostly differences in how badly each had
 been mis-tuned.
 
 A further 50 trials each for RandomForest and CatBoost afterwards improved
-nothing — every model came back `keep incumbent`. That is the signal to stop:
-three independent searches converging on the same number is a property of the
-data, not of the search.
+nothing — re-validated, every model came back `keep incumbent`, the largest
+movement being −0.0002. That is the signal to stop: three independent searches
+converging on the same number is a property of the data, not of the search.
 
 **What is still optimistic.** The referee split settles *which* parameters to
 use. The figures above are still cross-validated over all the data, including

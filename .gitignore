@@ -33,3 +33,6 @@ tuning/*
 
 # Subsampled evaluate_cv runs
 cv_results_sample*.json
+
+# macOS finder droppings
+.DS_Store
