@@ -29,3 +29,4 @@ data/column_cache/
 # because it is the evidence for whatever ends up in configs/.
 tuning/*
 !tuning/referee.json
+.venv/
