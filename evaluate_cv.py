@@ -23,12 +23,14 @@ sits in the validation fold. The model has effectively already seen the
 neighbourhood of the answer.
 
 Usage:
-  python evaluate_cv.py --data <train_df_imputed.pkl | data/train.csv>
+  python evaluate_cv.py                        # the shared cache
+  python evaluate_cv.py --data data/train.csv  # a file instead
 """
 
 import argparse
 import json
 import os
+import pathlib
 import time
 import warnings
 from typing import Any, Dict, Tuple
@@ -36,7 +38,6 @@ from typing import Any, Dict, Tuple
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (average_precision_score, f1_score,
                              precision_recall_curve, roc_auc_score)
 from sklearn.model_selection import (StratifiedKFold, cross_val_score,
@@ -46,10 +47,15 @@ import catboost as cb
 import lightgbm as lgb
 import xgboost as xgb
 
+from build_cache import ensure_cache
+from src.encoding import sanitize_column_names
+from src.optimization import build_model, model_params
+
 warnings.filterwarnings("ignore")
 
 # The target keeps its Korean name, as it appears in the competition file.
 TARGET = "임신 성공 여부"   # "pregnancy success"
+CACHE = pathlib.Path("data/gain_cache.npz")
 SEED = 42
 
 
@@ -59,8 +65,25 @@ def log(message: str) -> None:
     print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
-def load_dataset(path: str) -> Tuple[pd.DataFrame, pd.Series]:
-    """Load either the preprocessed pickle or the raw competition CSV."""
+def load_dataset(path: str = None) -> Tuple[pd.DataFrame, pd.Series]:
+    """
+    The matrix every other script uses, or a file if one is named.
+
+    This used to build its own representation — read the CSV, fillna(-1),
+    get_dummies every object column — which is how it ended up measuring
+    something subtly different from the pipeline, and how it missed the column
+    name sanitising that LightGBM needs. Defaulting to the shared cache means
+    the leak comparison below runs on the representation that actually ships.
+
+    --data is kept for the older artefacts (a pickle, or the raw CSV) so the
+    historical figures stay reproducible.
+    """
+    if path is None:
+        ensure_cache(CACHE)
+        cached = np.load(CACHE, allow_pickle=True)
+        X = pd.DataFrame(cached["X"], columns=list(cached["columns"]))
+        return X, pd.Series(cached["y"].astype(int), name=TARGET)
+
     if path.endswith(".pkl"):
         df = pd.read_pickle(path)
     else:
@@ -68,10 +91,12 @@ def load_dataset(path: str) -> Tuple[pd.DataFrame, pd.Series]:
         if "ID" in df.columns:
             df = df.drop(columns=["ID"])
         df = df.fillna(-1)
-        # Minimal encoding, as a fallback when the preprocessed pickle is absent.
         object_columns = df.select_dtypes(include=["object"]).columns.tolist()
         if object_columns:
             df = pd.get_dummies(df, columns=object_columns, dummy_na=False)
+        # One-hot names inherit the category text, which can carry characters
+        # LightGBM rejects. src/encoding.py does this for the real pipeline.
+        df, _ = sanitize_column_names(df, df.copy())
 
     if TARGET not in df.columns:
         raise SystemExit(
@@ -82,21 +107,6 @@ def load_dataset(path: str) -> Tuple[pd.DataFrame, pd.Series]:
     X = df.drop(columns=[TARGET])
     X = X.apply(pd.to_numeric, errors="coerce").fillna(-1).astype(np.float32)
     return X, y
-
-
-def build_model(name: str, params: Dict[str, Any]):
-    tuned = model_params(params)
-    if name == "xgb":
-        return xgb.XGBClassifier(random_state=SEED, eval_metric="logloss",
-                                 n_jobs=-1, tree_method="hist", **tuned)
-    if name == "lgb":
-        return lgb.LGBMClassifier(random_state=SEED, n_jobs=-1, verbose=-1, **tuned)
-    if name == "cat":
-        return cb.CatBoostClassifier(random_state=SEED, verbose=0, thread_count=-1,
-                                     allow_writing_files=False, **tuned)
-    if name == "rf":
-        return RandomForestClassifier(random_state=SEED, n_jobs=-1, **tuned)
-    raise ValueError(name)
 
 
 def best_f1_threshold(y_true: np.ndarray, proba: np.ndarray) -> Tuple[float, float]:
@@ -196,9 +206,13 @@ def run_honest(X: pd.DataFrame, y: pd.Series, name: str, params: Dict[str, Any],
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", required=True)
+    parser.add_argument("--data", default=None,
+                        help="a .pkl or .csv; omit to use the shared cache")
     parser.add_argument("--params-dir", default="configs")
-    parser.add_argument("--out", default="cv_results.json")
+    parser.add_argument("--out", default=None,
+                        help="default cv_results.json, or a _sample suffix when "
+                             "--sample is given, so a quick run cannot clobber "
+                             "the recorded figures")
     parser.add_argument("--models", default="xgb,lgb,cat,rf")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--skip-leaky", action="store_true")
@@ -206,7 +220,13 @@ def main() -> None:
                         help="subsample rows, for timing runs")
     args = parser.parse_args()
 
-    log(f"loading {args.data}")
+    # A subsampled run measures something else entirely; letting it write to
+    # cv_results.json would silently replace the numbers the README cites.
+    if args.out is None:
+        args.out = (f"cv_results_sample{args.sample}.json" if args.sample
+                    else "cv_results.json")
+
+    log(f"loading {args.data or CACHE}")
     X, y = load_dataset(args.data)
     if args.sample:
         X, _, y, _ = train_test_split(X, y, train_size=args.sample,
@@ -220,7 +240,7 @@ def main() -> None:
     results: Dict[str, Any] = {
         "dataset": {"rows": total, "features": int(X.shape[1]),
                     "positive_rate": positives / total,
-                    "source": os.path.basename(args.data)},
+                    "source": os.path.basename(args.data) if args.data else str(CACHE)},
         "protocol": {
             "honest": (f"StratifiedKFold({args.folds}), SMOTE inside the training "
                        "fold only, threshold tuned on an inner 20% calibration split"),

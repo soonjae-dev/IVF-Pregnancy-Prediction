@@ -2,17 +2,25 @@
 ===============================================================================
 Main Pipeline Execution Script (main.py)
 ===============================================================================
+Steps 1-6 -- preprocessing, feature engineering, selection, encoding and GAIN
+imputation -- run in a separate process, through build_cache.py, and this
+script picks up the matrix they produce.
+
+That is not an optimisation, though it is one: the cache means GAIN runs once
+across every script in the repository instead of once per script. It is a
+requirement. GAIN needs PyTorch, this script needs LightGBM, XGBoost and
+CatBoost, and on macOS a process holding torch alongside any of those dies on a
+duplicate OpenMP runtime -- in either import order. See TUNING.md.
 """
 
 import json
+
+import numpy as np
 import pandas as pd
+
+from build_cache import ensure_cache
 from src.logger import logger
-from src.config import set_seed, get_device
-from src.preprocessing import run_basic_preprocessing
-from src.features import run_feature_engineering
-from src.feature_selection import run_feature_selection
-from src.encoding import run_encoding_pipeline
-from src.run_imputation import run_gain_on_dataframes
+from src.config import set_seed
 from src.data_splitting import prepare_training_data
 from src.optimization import (
     optimize_xgboost,
@@ -28,12 +36,36 @@ import lightgbm as lgb
 from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
 
+TARGET = "임신 성공 여부"
+CACHE = "data/gain_cache.npz"
+
+
 def load_config(config_path: str = "configs/config.json") -> dict:
     """
     Load pipeline configurations from a JSON file.
     """
     with open(config_path, "r", encoding="utf-8") as file:
         return json.load(file)
+
+
+def load_prepared_data(iterations: int):
+    """
+    Steps 2-6, as build_cache.py produced them.
+
+    Builds the cache first if it is missing; that build is a subprocess, so no
+    torch is imported here. Returns the frames this script used to construct
+    inline, so everything downstream is unchanged.
+    """
+    ensure_cache(CACHE, iterations=iterations)
+    cached = np.load(CACHE, allow_pickle=True)
+
+    columns = list(cached["columns"])
+    train_df = pd.DataFrame(cached["X"], columns=columns)
+    train_df.insert(0, TARGET, cached["y"])
+    test_df = pd.DataFrame(cached["X_test"], columns=columns)
+    test_ids = pd.Series(cached["test_ids"], name="ID")
+
+    return train_df, test_df, test_ids
 
 def main():
     logger.info("========== Pipeline Execution Started ==========")
@@ -45,34 +77,14 @@ def main():
     # 1. Environment Setup
     logger.info("[1] Setting up environment...")
     set_seed(config["pipeline"]["seed"])
-    device = get_device()
-    
-    # 2. Data Loading & Basic Preprocessing
-    logger.info("[2] Loading data and basic preprocessing...")
-    train_df, test_df, test_ids = run_basic_preprocessing(
-        config["pipeline"]["train_data_path"], 
-        config["pipeline"]["test_data_path"]
+
+    # 2-6. Preprocessing through GAIN imputation, in a separate process
+    logger.info("[2-6] Loading the prepared matrix (built by build_cache.py)...")
+    train_df, test_df, test_ids = load_prepared_data(
+        config["imputation"]["gain_iterations"]
     )
-    
-    # 3. Feature Engineering
-    logger.info("[3] Feature Engineering...")
-    train_df, test_df = run_feature_engineering(train_df, test_df)
-    
-    # 4. Feature Selection
-    logger.info("[4] Feature Selection...")
-    train_df, test_df = run_feature_selection(train_df, test_df)
-    
-    # 5. Categorical Encoding
-    logger.info("[5] Encoding Categorical Variables...")
-    train_df, test_df = run_encoding_pipeline(train_df, test_df)
-    
-    # 6. Missing Value Imputation (GAIN)
-    logger.info("[6] Imputing Missing Values with GAIN...")
-    train_df, test_df = run_gain_on_dataframes(
-        train_df, test_df, device, 
-        iterations=config["imputation"]["gain_iterations"]
-    )
-    
+    logger.info(f"      train {train_df.shape}, test {test_df.shape}")
+
     # 7. Data Splitting
     # No resampling. SMOTE used to be applied to the whole training set here;
     # resampling_study.py measures it as worth -0.0004 ROC-AUC on this

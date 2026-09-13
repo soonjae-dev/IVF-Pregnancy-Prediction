@@ -114,26 +114,34 @@ python tune.py --status
   cat         -       -         -
 ```
 
-Rough costs per trial on the full 104-feature matrix, with 3 folds — a MacBook
-Air will be somewhere near these, and will slow down as it heats up:
+Measured on an M-series MacBook Air, on the full 104-feature matrix with 3
+folds, counting pruned trials in the average:
 
-| model | per trial | 60 trials |
+| model | per trial | 100 trials |
 |---|---|---|
-| `lgb` | ~10 s | ~15 min |
-| `xgb` | ~40 s | ~50 min |
-| `rf` | ~2 min | ~2 h |
-| `cat` | ~3 min | ~3 h |
+| `lgb` | ~7 s | ~12 min |
+| `rf` | ~2.4 min | ~4 h |
+| `cat` | ~2.4 min | ~4 h |
 
-Pruning cuts this: a hopeless parameter set dies after one fold instead of
-three, and roughly a third of trials get pruned once the median pruner has
-enough history. `--hours 8` stops on the clock instead of the trial count, which
-is the better flag for an overnight run:
+`xgb` was not timed on its own; it sits between `lgb` and the other two. Expect
+a fanless machine to slow down as it heats up.
+
+Pruning is doing real work in those numbers: a hopeless parameter set dies after
+one fold instead of three, and roughly 40% of trials get pruned once the median
+pruner has enough history to judge by.
+
+The gap between `lgb` and the rest is large enough to change how you spend the
+time. `lgb` and `xgb` take a trial count; 200 is a few minutes and worth it,
+since 6 hyperparameters is not a space 60 trials covers. `rf` and `cat` are
+better given a clock:
 
 ```bash
-caffeinate -i python tune.py --model cat --hours 8
+caffeinate -i python tune.py --model lgb --trials 200
+caffeinate -i python tune.py --model cat --hours 6
 ```
 
-Take `rf` and `cat` overnight; `lgb` and `xgb` fit in a coffee break.
+`--trials` is how many to add *this run*, not a target. Giving `lgb` 200 when it
+already has 60 leaves it with 260, not 200.
 
 ## 3. Referee
 

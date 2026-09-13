@@ -27,7 +27,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 ├── notebooks/             # Initial EDA and experiment notebook
 ├── src/                   # Core pipeline modules
 │   ├── __init__.py
-│   ├── config.py          # Environment setup, seed fixing, and device config (MPS/CUDA/CPU)
+│   ├── config.py          # Seeding and device selection (torch imported lazily)
 │   ├── preprocessing.py   # Data loading and basic preprocessing
 │   ├── features.py        # Domain-based feature engineering (e.g., success rates)
 │   ├── feature_selection.py # Correlation-based feature dropping
@@ -39,9 +39,9 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 │   ├── tab_transformer.py # TabTransformer; the only module that needs torch
 │   ├── ensemble.py        # Stacking and Weighted Ensemble logic
 │   └── evaluation.py      # F1 threshold optimization and submission generation
-├── main.py                # Main execution script
+├── main.py                # Main execution script (reads the cache; no torch)
 ├── build_cache.py         # Steps 1-6 once, cached; GAIN isolated in its own process
-├── evaluate_cv.py         # Leakage-free CV evaluation of the SMOTE protocols
+├── evaluate_cv.py         # Reproduces the SMOTE-before-CV leak against its fix
 ├── resampling_study.py    # Imbalance strategies compared on identical folds
 ├── ensemble_study.py      # What the ensembles add over the best single model
 ├── target_encoding_study.py # Whether the age target encoding leaked, and what it was worth

@@ -46,6 +46,19 @@ def log(message):
     print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
+# Keys every cache carries. A cache written before X_test was added is missing
+# some of these, so it is rebuilt rather than half-read.
+REQUIRED_KEYS = {"X", "y", "columns", "X_test", "test_ids"}
+
+
+def _is_complete(path):
+    try:
+        with np.load(path, allow_pickle=True) as cached:
+            return REQUIRED_KEYS.issubset(set(cached.files))
+    except Exception:
+        return False
+
+
 def ensure_cache(out=DEFAULT_CACHE, encode=None, iterations=None, quiet=False):
     """
     Return the cache path, building it in a separate process if it is missing.
@@ -56,9 +69,13 @@ def ensure_cache(out=DEFAULT_CACHE, encode=None, iterations=None, quiet=False):
     """
     out = pathlib.Path(out)
     if out.exists():
+        if _is_complete(out):
+            if not quiet:
+                log(f"using cached matrix {out}")
+            return out
         if not quiet:
-            log(f"using cached matrix {out}")
-        return out
+            log(f"{out} predates the test matrix — rebuilding")
+        out.unlink()
 
     command = [sys.executable, str(pathlib.Path(__file__).resolve()), "--out", str(out)]
     for column in encode or []:
@@ -95,7 +112,7 @@ def build(out, encode, iterations, force):
     device = get_device()
 
     log("preprocessing, feature engineering, selection, encoding")
-    train_df, test_df, _ = run_basic_preprocessing(
+    train_df, test_df, test_ids = run_basic_preprocessing(
         config["pipeline"]["train_data_path"], config["pipeline"]["test_data_path"])
     train_df, test_df = run_feature_engineering(train_df, test_df)
     train_df, test_df = run_feature_selection(train_df, test_df)
@@ -107,18 +124,28 @@ def build(out, encode, iterations, force):
 
     log(f"GAIN imputation ({iterations} iterations) on {device}")
     started = time.time()
-    train_df, _ = run_gain_on_dataframes(train_df, test_df, device,
-                                         iterations=iterations)
+    train_df, test_df = run_gain_on_dataframes(train_df, test_df, device,
+                                               iterations=iterations)
     log(f"  GAIN finished in {time.time() - started:.0f}s")
 
     y = train_df[TARGET].astype(int).values
     features = train_df.drop(columns=[TARGET])
     X = features.values.astype(np.float32)
 
+    # The test matrix rides along so that main.py can produce submissions
+    # without ever importing torch. synchronize_columns has already aligned the
+    # two frames, so one column list describes both.
+    if list(test_df.columns) != list(features.columns):
+        raise RuntimeError("train and test columns diverged after imputation")
+    X_test = test_df.values.astype(np.float32)
+
     out.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out, X=X, y=y,
-                        columns=np.array(features.columns, dtype=object))
-    log(f"cached {X.shape[0]:,} rows x {X.shape[1]} features to {out}")
+    np.savez_compressed(
+        out, X=X, y=y, X_test=X_test,
+        columns=np.array(features.columns, dtype=object),
+        test_ids=np.array([] if test_ids is None else test_ids.values, dtype=object))
+    log(f"cached {X.shape[0]:,} train and {X_test.shape[0]:,} test rows "
+        f"x {X.shape[1]} features to {out}")
 
 
 def main():

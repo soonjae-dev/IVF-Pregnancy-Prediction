@@ -1,75 +1,51 @@
 """
 ===============================================================================
-Setup and Environment Configuration
+Environment Setup (src/config.py)
 ===============================================================================
-This module imports required libraries, configures global settings, and 
-checks for hardware acceleration (macOS MPS / CPU).
+Seeding and device selection.
+
+This module used to re-export the whole stack — pandas, seaborn, matplotlib,
+sklearn, the three boosting libraries, skorch, torch, optuna — in the style of
+a notebook's first cell. Nothing imported any of it: every consumer takes
+set_seed and get_device and nothing else.
+
+That mattered more than tidiness. skorch pulls in torch, so `from src.config
+import set_seed` loaded torch into whatever process asked, and on macOS a
+process holding torch alongside LightGBM, XGBoost and CatBoost dies on a
+duplicate OpenMP runtime. main.py went through this import.
+
+torch is now imported inside get_device, which only build_cache.py calls, and
+nowhere else.
 """
 
 import random
-import warnings
+
 import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-# PyTorch Deep Learning Libraries
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-
-# Scikit-learn Ecosystem
-from sklearn.model_selection import (
-    train_test_split,
-    RepeatedStratifiedKFold,
-    cross_val_score,
-    learning_curve,
-    StratifiedKFold
-)
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
-from sklearn.metrics import (
-    roc_auc_score,
-    f1_score,
-    classification_report,
-    confusion_matrix,
-    precision_recall_curve
-)
-from sklearn.ensemble import StackingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-
-# Gradient Boosting & PyTorch Integration
-import lightgbm as lgb
-import xgboost as xgb
-import catboost as cb
-from skorch import NeuralNetClassifier
-
-# Hyperparameter Optimization
-import optuna
-
-# Ignore non-critical warning messages
-warnings.filterwarnings("ignore")
-
-# Global Plotting Configuration
-sns.set(style="whitegrid")
 
 
-def set_seed(seed: int = 42):
+def set_seed(seed: int = 42) -> None:
     """
-    Set random seed across all frameworks for reproducibility.
+    Seed Python's `random` and NumPy.
+
+    Deliberately not torch: importing it here would put torch in every process
+    that seeds anything. The one place torch randomness matters is GAIN, and
+    `src.gain_imputer.gain_impute` seeds it directly from its own `seed`
+    argument, inside the process that actually runs it.
     """
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
 
 
-def get_device() -> torch.device:
+def get_device():
     """
-    Check and return the available compute device (MPS for Apple Silicon, CUDA, or CPU).
+    Return the best available compute device: MPS, CUDA, or CPU.
+
+    Imports torch on call rather than at module scope — see the module
+    docstring. Only call this from a process that has no boosting library
+    loaded.
     """
+    import torch
+
     if torch.backends.mps.is_available():
         device = torch.device("mps")
         print("[INFO] MPS device is available. Using Apple Silicon Acceleration (MPS).")
@@ -80,9 +56,3 @@ def get_device() -> torch.device:
         device = torch.device("cpu")
         print("[INFO] Accelerator unavailable. Falling back to CPU.")
     return device
-
-
-if __name__ == "__main__":
-    # Test environment setup
-    set_seed(42)
-    device = get_device()
