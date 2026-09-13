@@ -51,6 +51,8 @@ import optuna
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
+from build_cache import ensure_cache
+
 warnings.filterwarnings("ignore")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -68,12 +70,8 @@ def log(message):
 
 
 def load_matrix():
-    """The imputed matrix the studies cache. Built by any of them."""
-    if not CACHE.exists():
-        raise SystemExit(
-            f"{CACHE} not found.\n"
-            "Build it once with:  python ensemble_study.py\n"
-            "(or resampling_study.py / column_study.py -- they share the cache)")
+    """The imputed matrix, built once by build_cache.py in its own process."""
+    ensure_cache(CACHE)
     cached = np.load(CACHE, allow_pickle=True)
     return cached["X"], cached["y"]
 

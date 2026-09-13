@@ -55,6 +55,7 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 import lightgbm as lgb
 import xgboost as xgb
 
+from build_cache import ensure_cache
 from src.optimization import model_params
 
 warnings.filterwarnings("ignore")
@@ -71,11 +72,8 @@ def log(message):
 
 
 def load_cached():
-    """The matrix built by resampling_study.py / ensemble_study.py."""
-    if not CACHE.exists():
-        raise SystemExit(
-            f"{CACHE} not found. Run `python resampling_study.py` first — it "
-            "builds and caches the imputed matrix.")
+    """The imputed matrix, built once by build_cache.py in its own process."""
+    ensure_cache(CACHE)
     cached = np.load(CACHE, allow_pickle=True)
     return cached["X"], cached["y"], list(cached["columns"])
 

@@ -26,8 +26,6 @@ Usage:
 """
 
 import argparse
-import contextlib
-import io
 import json
 import pathlib
 import time
@@ -39,6 +37,7 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 
 import lightgbm as lgb
 
+from build_cache import ensure_cache
 from src.optimization import model_params
 
 warnings.filterwarnings("ignore")
@@ -67,47 +66,17 @@ def log(message):
     print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
-def quiet(fn, *args, **kwargs):
-    with contextlib.redirect_stdout(io.StringIO()):
-        return fn(*args, **kwargs)
-
-
 def build(encode_columns, tag, iterations):
-    """Steps 1-6 of main.py with a given encode list. Cached per variant."""
+    """
+    Steps 1-6 with a given encode list, cached per variant.
+
+    Each variant is a separate build_cache.py process, which is what makes a
+    fresh GAIN per variant affordable to run and keeps torch out of this one.
+    """
     cache = CACHE_DIR / f"{tag}.npz"
-    if cache.exists():
-        cached = np.load(cache, allow_pickle=True)
-        return cached["X"], cached["y"], list(cached["columns"])
-
-    from src.config import get_device, set_seed
-    from src.encoding import run_encoding_pipeline
-    from src.feature_selection import run_feature_selection
-    from src.features import run_feature_engineering
-    from src.preprocessing import run_basic_preprocessing
-    from src.run_imputation import run_gain_on_dataframes
-
-    config = json.load(open("configs/config.json"))
-    set_seed(SEED)
-    device = get_device()
-
-    train_df, test_df, _ = quiet(
-        run_basic_preprocessing,
-        config["pipeline"]["train_data_path"], config["pipeline"]["test_data_path"])
-    train_df, test_df = quiet(run_feature_engineering, train_df, test_df)
-    train_df, test_df = quiet(run_feature_selection, train_df, test_df)
-    train_df, test_df = quiet(run_encoding_pipeline, train_df, test_df,
-                              columns_to_encode=encode_columns)
-    train_df, _ = quiet(run_gain_on_dataframes, train_df, test_df, device,
-                        iterations=iterations)
-
-    y = train_df[TARGET].astype(int).values
-    features = train_df.drop(columns=[TARGET])
-    X = features.values.astype(np.float32)
-
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(cache, X=X, y=y,
-                        columns=np.array(features.columns, dtype=object))
-    return X, y, list(features.columns)
+    ensure_cache(cache, encode=encode_columns, iterations=iterations, quiet=True)
+    cached = np.load(cache, allow_pickle=True)
+    return cached["X"], cached["y"], list(cached["columns"])
 
 
 def best_f1_threshold(y_true, proba):

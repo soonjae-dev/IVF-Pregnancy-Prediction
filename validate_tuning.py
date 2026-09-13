@@ -35,6 +35,8 @@ import numpy as np
 from sklearn.metrics import f1_score, precision_recall_curve, roc_auc_score
 from sklearn.model_selection import train_test_split
 
+from build_cache import ensure_cache
+
 warnings.filterwarnings("ignore")
 
 SEED = 42
@@ -51,8 +53,7 @@ def log(message):
 
 
 def splits():
-    if not CACHE.exists():
-        raise SystemExit(f"{CACHE} not found. Run `python ensemble_study.py` first.")
+    ensure_cache(CACHE)
     cached = np.load(CACHE, allow_pickle=True)
     X, y = cached["X"], cached["y"]
     return train_test_split(X, y, test_size=0.25,

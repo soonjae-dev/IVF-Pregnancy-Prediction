@@ -61,9 +61,27 @@ Every script reads the same cached matrix, so pay for GAIN once:
 python ensemble_study.py
 ```
 
-This also gives you the current published figures to compare against later. It
-writes `data/gain_cache.npz`; delete that file if you ever change the feature
-pipeline, or every later step will quietly measure the old representation.
+It builds `data/gain_cache.npz` if it is missing, and also gives you the current
+published figures to compare against later. Delete that file if you ever change
+the feature pipeline, or every later step will quietly measure the old
+representation.
+
+The build happens in a separate process, on purpose. GAIN is the only step that
+needs PyTorch, and every study script imports LightGBM, XGBoost and CatBoost at
+module level. On macOS each of those links its own OpenMP runtime, and loading
+PyTorch's on top of them takes the process down with a bare
+`zsh: segmentation fault` before GAIN prints anything. You can see it for
+yourself:
+
+```bash
+python -c "import torch; x=torch.randn(2000,200); print((x@x.T).sum())"                      # fine
+python -c "import lightgbm, xgboost, catboost; import torch; x=torch.randn(2000,200); print((x@x.T).sum())"   # segfault
+```
+
+`build_cache.py` runs GAIN in an interpreter that has never imported a boosting
+library, which sidesteps it. If you write a script of your own that needs both,
+keep them in separate processes rather than hunting for an import order that
+happens to survive.
 
 ## 2. Search, one model at a time
 

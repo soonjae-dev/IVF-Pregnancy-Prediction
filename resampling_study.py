@@ -22,8 +22,6 @@ Usage:
 """
 
 import argparse
-import contextlib
-import io
 import json
 import pathlib
 import time
@@ -40,6 +38,7 @@ import catboost as cb
 import lightgbm as lgb
 import xgboost as xgb
 
+from build_cache import ensure_cache
 from src.optimization import model_params
 
 warnings.filterwarnings("ignore")
@@ -53,51 +52,14 @@ def log(message):
     print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
-def quiet(fn, *args, **kwargs):
-    with contextlib.redirect_stdout(io.StringIO()):
-        return fn(*args, **kwargs)
-
-
 def build_dataset(config):
-    """Steps 1-6 of main.py, cached."""
-    if CACHE.exists():
-        log(f"loading cached matrix from {CACHE}")
-        cached = np.load(CACHE, allow_pickle=True)
-        return cached["X"], cached["y"], list(cached["columns"])
-
-    from src.config import get_device, set_seed
-    from src.encoding import run_encoding_pipeline
-    from src.feature_selection import run_feature_selection
-    from src.features import run_feature_engineering
-    from src.preprocessing import run_basic_preprocessing
-    from src.run_imputation import run_gain_on_dataframes
-
-    set_seed(SEED)
-    device = get_device()
-
-    log("preprocessing, feature engineering, selection, encoding")
-    train_df, test_df, _ = quiet(
-        run_basic_preprocessing,
-        config["pipeline"]["train_data_path"], config["pipeline"]["test_data_path"])
-    train_df, test_df = quiet(run_feature_engineering, train_df, test_df)
-    train_df, test_df = quiet(run_feature_selection, train_df, test_df)
-    train_df, test_df = quiet(run_encoding_pipeline, train_df, test_df)
-
-    log(f"GAIN imputation ({config['imputation']['gain_iterations']} iterations)")
-    started = time.time()
-    train_df, _ = quiet(
-        run_gain_on_dataframes, train_df, test_df, device,
-        iterations=config["imputation"]["gain_iterations"])
-    log(f"  GAIN finished in {time.time() - started:.0f}s")
-
-    y = train_df[TARGET].astype(int).values
-    features = train_df.drop(columns=[TARGET])
-    X = features.values.astype(np.float32)
-
-    CACHE.parent.mkdir(exist_ok=True)
-    np.savez_compressed(CACHE, X=X, y=y, columns=np.array(features.columns, dtype=object))
-    log(f"cached to {CACHE}")
-    return X, y, list(features.columns)
+    """
+    The imputed matrix, built once by build_cache.py and shared with the other
+    studies. That build runs in its own process — see build_cache.py for why.
+    """
+    ensure_cache(CACHE, iterations=config["imputation"]["gain_iterations"])
+    cached = np.load(CACHE, allow_pickle=True)
+    return cached["X"], cached["y"], list(cached["columns"])
 
 
 def make_model(name, params, scale_pos_weight=None):

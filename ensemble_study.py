@@ -32,8 +32,6 @@ Usage:
 """
 
 import argparse
-import contextlib
-import io
 import json
 import pathlib
 import time
@@ -49,6 +47,7 @@ import catboost as cb
 import lightgbm as lgb
 import xgboost as xgb
 
+from build_cache import ensure_cache
 from src.optimization import model_params
 
 warnings.filterwarnings("ignore")
@@ -63,56 +62,16 @@ def log(message):
     print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
-def quiet(fn, *args, **kwargs):
-    with contextlib.redirect_stdout(io.StringIO()):
-        return fn(*args, **kwargs)
-
-
 def build_dataset():
     """
-    Steps 1-6 of main.py, cached.
-
-    The cache is shared with resampling_study.py and target_encoding_study.py,
-    so it has to carry `columns` even though this script does not need them —
-    otherwise whichever script runs first decides whether the others work.
+    The imputed matrix, built once by build_cache.py and shared with every other
+    study. That build runs in its own process: GAIN is the only step that needs
+    torch, and this module has already loaded three OpenMP-linked boosting
+    libraries by the time it is called.
     """
-    if CACHE.exists():
-        log(f"loading cached matrix from {CACHE}")
-        cached = np.load(CACHE, allow_pickle=True)
-        return cached["X"], cached["y"]
-
-    import torch
-
-    from src.config import set_seed
-    from src.encoding import run_encoding_pipeline
-    from src.feature_selection import run_feature_selection
-    from src.features import run_feature_engineering
-    from src.preprocessing import run_basic_preprocessing
-    from src.run_imputation import run_gain_on_dataframes
-
-    config = json.load(open("configs/config.json"))
-    set_seed(SEED)
-
-    log("preprocessing and feature pipeline")
-    train_df, test_df, _ = quiet(
-        run_basic_preprocessing,
-        config["pipeline"]["train_data_path"], config["pipeline"]["test_data_path"])
-    train_df, test_df = quiet(run_feature_engineering, train_df, test_df)
-    train_df, test_df = quiet(run_feature_selection, train_df, test_df)
-    train_df, test_df = quiet(run_encoding_pipeline, train_df, test_df)
-
-    log("GAIN imputation (target held out)")
-    train_df, _ = quiet(run_gain_on_dataframes, train_df, test_df,
-                        torch.device("cpu"),
-                        iterations=config["imputation"]["gain_iterations"])
-
-    y = train_df[TARGET].astype(int).values
-    features = train_df.drop(columns=[TARGET])
-    X = features.values.astype(np.float32)
-    CACHE.parent.mkdir(exist_ok=True)
-    np.savez_compressed(CACHE, X=X, y=y,
-                        columns=np.array(features.columns, dtype=object))
-    return X, y
+    ensure_cache(CACHE)
+    cached = np.load(CACHE, allow_pickle=True)
+    return cached["X"], cached["y"]
 
 
 def make_model(name, params):
