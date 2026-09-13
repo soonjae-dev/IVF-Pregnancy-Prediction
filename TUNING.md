@@ -84,8 +84,8 @@ has never imported a boosting library, and `src/optimization.py` holds no torch
 at all (the TabTransformer, which needs it, lives in `src/tab_transformer.py`),
 so `tune.py` and the study scripts never load it either.
 
-`main.py` is the exception and is still affected: it needs GAIN and the four
-models in one process. Use the study scripts and `tune.py` on macOS.
+`main.py` needs both too, and gets them the same way: it reads the cache rather
+than calling GAIN itself, so it holds no torch either.
 
 ## 2. Search, one model at a time
 

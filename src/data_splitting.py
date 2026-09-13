@@ -7,9 +7,10 @@ and defining the cross-validation strategy for model evaluation.
 
 No resampling happens here. The pipeline used to apply SMOTE to the whole
 training set at this point; `resampling_study.py` measures what that is worth
-on the representation this pipeline actually produces (-0.0004 ROC-AUC averaged
-over the four base models, at 1.8-3.2x the training time), so it was removed
-rather than kept as a default nobody had checked.
+on the representation this pipeline actually produces: it loses to plain
+training in all four models, -0.0017 ROC-AUC on average at 1.8-2.4x the
+training time. So it was removed rather than kept as a default nobody had
+checked.
 """
 
 import numpy as np
