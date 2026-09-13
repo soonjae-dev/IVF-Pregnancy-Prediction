@@ -62,10 +62,21 @@ def synchronize_columns(
     train_cols = set(train_df.columns)
     test_cols = set(test_df.columns)
     common_cols = list(train_cols.intersection(test_cols))
-    
+
     if target_col in common_cols:
         common_cols.remove(target_col)
-        
+
+    # Taking the intersection is right -- a feature the model cannot see at
+    # prediction time is useless -- but doing it silently is not. A one-hot
+    # category present in only one of the two frames disappears from both here,
+    # and that is worth seeing rather than discovering later as a shape mismatch.
+    train_only = sorted(train_cols - test_cols - {target_col})
+    test_only = sorted(test_cols - train_cols)
+    if train_only:
+        print(f"[WARN] Dropping {len(train_only)} train-only column(s): {train_only}")
+    if test_only:
+        print(f"[WARN] Dropping {len(test_only)} test-only column(s): {test_only}")
+
     # Sort for consistent column ordering
     sorted_features = sorted(common_cols)
     
@@ -79,10 +90,18 @@ def run_encoding_pipeline(
     train_df: pd.DataFrame, 
     test_df: pd.DataFrame, 
     target_col: str = "임신 성공 여부",
-    columns_to_encode: List[str] = ["시술 유형_원본"]
+    columns_to_encode: List[str] = ["시술 유형_원본", "시술 당시 나이"]
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Execute the complete encoding and synchronization pipeline.
+
+    Note that columns_to_encode doubles as the keep-list: every other object
+    column is dropped in step 1. "시술 당시 나이" is on it because age is the
+    single most predictive variable in the dataset -- success rate runs 0.323
+    to 0.118 across its 7 brackets -- and this is the only place it enters the
+    feature space. It used to reach the model as a target encoding built in
+    features.py, which was replaced by this one-hot; see
+    target_encoding_study.py.
     """
     print("[INFO] Starting Categorical Encoding Pipeline...")
     

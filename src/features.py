@@ -2,8 +2,10 @@
 ===============================================================================
 Domain-Based Feature Engineering (src/features.py)
 ===============================================================================
-This module contains functions for generating new features based on domain 
-knowledge, handling string-to-numeric conversions, and performing target encoding.
+This module contains functions for generating new features based on domain
+knowledge and handling string-to-numeric conversions.
+
+It no longer performs target encoding; see the note above run_feature_engineering.
 """
 
 import pandas as pd
@@ -56,33 +58,43 @@ def create_success_rate_feature(train_df: pd.DataFrame, test_df: pd.DataFrame) -
         
     return train_df, test_df
 
-def create_age_success_rate(train_df: pd.DataFrame, test_df: pd.DataFrame, target_col: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Perform target encoding: Map the average pregnancy success rate grouped by age.
-    The mapping is strictly derived from the training set to prevent data leakage.
-    """
-    if ("시술 당시 나이" in train_df.columns) and (target_col in train_df.columns):
-        # Calculate mean success rate grouped by age from the training set
-        age_success_rate = train_df.groupby("시술 당시 나이")[target_col].mean()
-        
-        # Apply the derived mapping to both train and test sets
-        train_df["연령대 평균 임신 성공률"] = train_df["시술 당시 나이"].map(age_success_rate)
-        if "시술 당시 나이" in test_df.columns:
-            test_df["연령대 평균 임신 성공률"] = test_df["시술 당시 나이"].map(age_success_rate)
-            
-    return train_df, test_df
+# ---------------------------------------------------------------------------
+# Removed: create_age_success_rate
+#
+# This module used to target-encode the age bracket -- group the training set
+# on "시술 당시 나이", take the mean of the label, and map it back -- producing
+# the feature "연령대 평균 임신 성공률". Every training row's own label sat
+# inside the group mean it received, and the mapping was fitted once on the
+# whole training set, before any cross-validation split.
+#
+# target_encoding_study.py measures all of that. The leak is worth -0.0005
+# ROC-AUC, which is to say nothing: the bracket takes 7 values and the smallest
+# group holds 329 rows, so no single row moves its own group mean.
+#
+# What the study also showed is that the feature was load-bearing for a reason
+# that had nothing to do with the labels. "시술 당시 나이" is an object column,
+# so encoding.py dropped it, and this feature was the only path by which age
+# reached the model at all -- removing it costs 0.0148 AUC. Replacing it with a
+# plain one-hot of the same 7 brackets scores within 0.0004 of it.
+#
+# So the bracket is now one-hot encoded in encoding.py and the target encoding
+# is gone. Same accuracy, and a whole category of error no longer has to be
+# argued about.
+# ---------------------------------------------------------------------------
 
-def run_feature_engineering(train_df: pd.DataFrame, test_df: pd.DataFrame, target_col: str = "임신 성공 여부") -> Tuple[pd.DataFrame, pd.DataFrame]:
+def run_feature_engineering(train_df: pd.DataFrame, test_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Execute the full feature engineering pipeline.
+
+    The target column is no longer a parameter: with the target encoding gone,
+    nothing in this module reads the label, which is the point.
     """
     print("[INFO] Starting feature engineering pipeline...")
-    
+
     train_df, test_df = clean_count_columns(train_df, test_df)
     train_df, test_df = copy_original_features(train_df, test_df)
     train_df, test_df = create_success_rate_feature(train_df, test_df)
-    train_df, test_df = create_age_success_rate(train_df, test_df, target_col)
-    
+
     print(f"[INFO] After Feature Engineering, Train shape: {train_df.shape}")
     print(f"[INFO] After Feature Engineering, Test shape : {test_df.shape}")
     

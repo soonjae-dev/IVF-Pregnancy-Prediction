@@ -67,7 +67,13 @@ def quiet(fn, *args, **kwargs):
 
 
 def build_dataset():
-    """Steps 1-6 of main.py, cached. Shares the cache with resampling_study.py."""
+    """
+    Steps 1-6 of main.py, cached.
+
+    The cache is shared with resampling_study.py and target_encoding_study.py,
+    so it has to carry `columns` even though this script does not need them —
+    otherwise whichever script runs first decides whether the others work.
+    """
     if CACHE.exists():
         log(f"loading cached matrix from {CACHE}")
         cached = np.load(CACHE, allow_pickle=True)
@@ -99,9 +105,11 @@ def build_dataset():
                         iterations=config["imputation"]["gain_iterations"])
 
     y = train_df[TARGET].astype(int).values
-    X = train_df.drop(columns=[TARGET]).values.astype(np.float32)
+    features = train_df.drop(columns=[TARGET])
+    X = features.values.astype(np.float32)
     CACHE.parent.mkdir(exist_ok=True)
-    np.savez_compressed(CACHE, X=X, y=y)
+    np.savez_compressed(CACHE, X=X, y=y,
+                        columns=np.array(features.columns, dtype=object))
     return X, y
 
 

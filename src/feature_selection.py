@@ -16,10 +16,27 @@ from typing import Tuple, List
 
 def setup_korean_font() -> None:
     """
-    Configure Matplotlib to correctly display Korean characters.
-    Optimized for macOS using 'AppleGothic'.
+    Configure Matplotlib to display Korean column names.
+
+    Picks the first font actually installed rather than hardcoding macOS's
+    AppleGothic, which leaves every label as a row of boxes on Linux and
+    Windows. If none of them are present the default font is kept and a warning
+    is printed, because an unreadable plot is better than an exception.
     """
-    mpl.rc('font', family='AppleGothic')
+    from matplotlib import font_manager
+
+    candidates = ["AppleGothic", "Malgun Gothic", "NanumGothic",
+                  "Noto Sans CJK KR", "Noto Sans KR"]
+    installed = {font.name for font in font_manager.fontManager.ttflist}
+
+    for name in candidates:
+        if name in installed:
+            mpl.rc('font', family=name)
+            break
+    else:
+        print(f"[WARN] No Korean font found (looked for {', '.join(candidates)}). "
+              "Korean labels will render as boxes.")
+
     mpl.rc('axes', unicode_minus=False)
 
 def plot_correlation_heatmap(train_df: pd.DataFrame, target_col: str = "임신 성공 여부") -> None:
