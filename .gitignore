@@ -21,3 +21,4 @@ catboost_info/
 # Logs
 logs/
 *.log
+data/column_cache/

@@ -75,8 +75,8 @@ def main():
     
     # 7. Data Splitting
     # No resampling. SMOTE used to be applied to the whole training set here;
-    # resampling_study.py measures it as worth -0.0017 ROC-AUC on this
-    # representation, at 1.7-2.7x the training time, so it was dropped.
+    # resampling_study.py measures it as worth -0.0004 ROC-AUC on this
+    # representation, at 1.8-3.2x the training time, so it was dropped.
     logger.info("[7] Splitting Data...")
     X_train, X_val, y_train, y_val, rskf = prepare_training_data(train_df)
 

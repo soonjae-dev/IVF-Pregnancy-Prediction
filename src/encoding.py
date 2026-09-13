@@ -7,8 +7,42 @@ and ensures that the feature space is perfectly synchronized between the
 training and testing datasets.
 """
 
+import re
+
 import pandas as pd
 from typing import Tuple, List
+
+
+def sanitize_column_names(
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Make one-hot column names safe for LightGBM.
+
+    LightGBM refuses feature names containing []{}":, with "Do not support
+    special JSON characters in feature name" -- and one-hot names inherit
+    whatever was in the category, so "특정 시술 유형" alone produces eleven
+    offenders (ICSI:IVF, IVF / AH:ICSI / AH, ...) and "배아 생성 주요 이유"
+    nine more, from comma-separated multi-labels.
+
+    This bit only shows up where a DataFrame reaches the model with its names
+    attached: main.py's StackingClassifier does, while anything that goes
+    through a Pipeline with a scaler, or through .values, hands over a bare
+    array and never trips it. So it stayed invisible until the discarded
+    columns were added back.
+
+    Offending characters become underscores, and any collisions that creates
+    are de-duplicated. Both frames are renamed with the same rule, which keeps
+    them aligned.
+    """
+    def clean(names):
+        cleaned = [re.sub(r'[\[\]{}":,]', "_", str(name)) for name in names]
+        return list(pd.io.common.dedup_names(cleaned, is_potential_multiindex=False))
+
+    train_df.columns = clean(train_df.columns)
+    test_df.columns = clean(test_df.columns)
+    return train_df, test_df
 
 def drop_unused_object_columns(
     train_df: pd.DataFrame, 
@@ -90,18 +124,38 @@ def run_encoding_pipeline(
     train_df: pd.DataFrame, 
     test_df: pd.DataFrame, 
     target_col: str = "임신 성공 여부",
-    columns_to_encode: List[str] = ["시술 유형_원본", "시술 당시 나이"]
+    columns_to_encode: List[str] = [
+        "시술 유형_원본",           # procedure type (the features.py copy)
+        "시술 당시 나이",           # patient age band
+        "시술 시기 코드",           # procedure period code
+        "특정 시술 유형",           # specific procedure type
+        "배란 유도 유형",           # ovulation induction type
+        "배아 생성 주요 이유",       # main reason for embryo creation
+        "클리닉 내 총 시술 횟수",    # total procedures at this clinic
+        "난자 출처",                # egg source
+        "정자 출처",                # sperm source
+        "난자 기증자 나이",          # egg donor age band
+        "정자 기증자 나이",          # sperm donor age band
+    ]
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Execute the complete encoding and synchronization pipeline.
 
-    Note that columns_to_encode doubles as the keep-list: every other object
-    column is dropped in step 1. "시술 당시 나이" is on it because age is the
-    single most predictive variable in the dataset -- success rate runs 0.323
-    to 0.118 across its 7 brackets -- and this is the only place it enters the
-    feature space. It used to reach the model as a target encoding built in
-    features.py, which was replaced by this one-hot; see
-    target_encoding_study.py.
+    columns_to_encode doubles as the keep-list: every object column not on it is
+    dropped in step 1. For most of this project that list held one name, and
+    everything else -- age, procedure type, donor ages, egg and sperm source --
+    was silently thrown away.
+
+    That was not a judgement anyone made. It surfaced when the age bracket was
+    found to be worth 0.0148 ROC-AUC while sitting on the wrong side of this
+    line, so column_study.py asked the same question of the rest: encode all
+    nine and the matrix goes from 39 features to 104, worth +0.0030 AUC to
+    LightGBM and +0.0069 to XGBoost.
+
+    "시술 유형" is deliberately absent: features.py copies it to
+    "시술 유형_원본" beforehand, so adding it here would duplicate those
+    indicators. The copy is vestigial and the two could be collapsed, but that
+    is a rename, not a measurement, so it is left alone.
     """
     print("[INFO] Starting Categorical Encoding Pipeline...")
     
@@ -115,15 +169,18 @@ def run_encoding_pipeline(
         train_df, test_df, columns_to_encode=columns_to_encode
     )
     
-    # 3. Synchronize features
+    # 3. Make the generated names safe for the downstream models
+    train_df, test_df = sanitize_column_names(train_df, test_df)
+
+    # 4. Synchronize features
     train_df, test_df = synchronize_columns(
         train_df, test_df, target_col=target_col
     )
-    
+
     print(f"[INFO] After Encoding & Sync, Train shape: {train_df.shape}")
     print(f"[INFO] After Encoding & Sync, Test shape : {test_df.shape}")
     
-    # 4. Validation: Check for remaining object columns
+    # 5. Validation: Check for remaining object columns
     rem_obj_train = train_df.select_dtypes(include=['object']).columns.tolist()
     rem_obj_test = test_df.select_dtypes(include=['object']).columns.tolist()
     

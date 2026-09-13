@@ -43,6 +43,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 ├── resampling_study.py    # Imbalance strategies compared on identical folds
 ├── ensemble_study.py      # What the ensembles add over the best single model
 ├── target_encoding_study.py # Whether the age target encoding leaked, and what it was worth
+├── column_study.py        # What is in the object columns the pipeline discarded
 ├── requirements.txt       # Project dependencies
 └── .gitignore
 ```
@@ -54,7 +55,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 - **Optimization**: `Optuna`
 
 ## Key Engineering Strategies
-- **Domain-Knowledge Feature Engineering**: Derived a feature calculating the pregnancy success rate per attempt from the total number of procedures and previous pregnancies. The age bracket — the strongest single predictor in the dataset — is one-hot encoded; it used to be target encoded, and [Results](#results) says why that changed.
+- **Domain-Knowledge Feature Engineering**: Derived a feature calculating the pregnancy success rate per attempt from the total number of procedures and previous pregnancies. Every categorical column is one-hot encoded, including the ten the pipeline used to discard unread — the age bracket among them, which alone was worth 0.0148 AUC. See [Results](#results).
 - **Advanced Missing Value Imputation**: Generative Adversarial Imputation Nets (GAIN) implemented in PyTorch. The target column is held out of the imputation and both generators are seeded — see [Results](#results) for why both matter.
 - **Imbalanced Data Handling**: none. SMOTE was originally applied to the whole training set; it was first moved inside each cross-validation fold, then measured against no resampling at all, found to change nothing, and removed. The measurement is kept as a script — see [Results](#results).
 - **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for the four tree-based models the pipeline uses (XGBoost, LightGBM, RandomForest, CatBoost). A TabTransformer is also implemented and tunable in `src/optimization.py`, but `main.py` does not call it.
@@ -62,7 +63,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 
 ## Results
 
-Evaluated on the full training set: **256,351 rows × 39 features** after feature
+Evaluated on the full training set: **256,351 rows × 104 features** after feature
 engineering, selection, one-hot encoding and GAIN imputation, with a **25.8%
 positive rate**.
 
@@ -75,19 +76,19 @@ out-of-fold probabilities.
 
 | Model | OOF ROC-AUC | OOF F1 |
 |---|---|---|
-| LightGBM | 0.7281 | 0.5079 |
-| RandomForest | 0.7271 | 0.5079 |
-| CatBoost | 0.7224 | 0.5046 |
-| XGBoost | 0.7167 | 0.5010 |
-| **Weighted ensemble** | **0.7308** | **0.5106** |
-| **Stacked (logistic meta)** | **0.7310** | **0.5108** |
+| RandomForest | 0.7319 | 0.5113 |
+| LightGBM | 0.7311 | 0.5109 |
+| CatBoost | 0.7239 | 0.5050 |
+| XGBoost | 0.7236 | 0.5057 |
+| **Stacked (logistic meta)** | **0.7346** | **0.5139** |
+| **Weighted ensemble** | **0.7348** | **0.5142** |
 
-Blend weights, averaged over folds: LightGBM 0.47 · RandomForest 0.41 ·
-CatBoost 0.12 · XGBoost 0.01. Either ensemble is worth about **+0.003 AUC and
+Blend weights, averaged over folds: RandomForest 0.55 · LightGBM 0.33 ·
+CatBoost 0.10 · XGBoost 0.02. Either ensemble is worth about **+0.003 AUC and
 +0.003 F1** over the best single model — small, but consistent across all five
-folds. The two ensembles are tied to within 0.0002, which is well inside the
-fold-to-fold spread; nothing here says one beats the other. For reference,
-labelling every case positive yields F1 = 0.4106.
+folds. The two are tied to within 0.0002, well inside the fold-to-fold spread;
+nothing here says one beats the other. For reference, labelling every case
+positive yields F1 = 0.4106.
 
 Reproduce with `python ensemble_study.py`.
 
@@ -98,14 +99,17 @@ SMOTE does nothing:
 
 | Model | no resampling | SMOTE | `scale_pos_weight` | SMOTE cost |
 |---|---|---|---|---|
-| LightGBM | 0.7281 | 0.7263 | 0.7272 | 2.7× time |
-| RandomForest | 0.7271 | 0.7246 | 0.7233 | 1.7× |
-| CatBoost | 0.7224 | 0.7186 | 0.7210 | 1.7× |
-| XGBoost | 0.7167 | 0.7177 | 0.7123 | 2.2× |
+| RandomForest | 0.7319 | 0.7307 | 0.7278 | 1.8× time |
+| LightGBM | 0.7311 | 0.7309 | 0.7303 | 2.9× |
+| CatBoost | 0.7239 | 0.7208 | 0.7224 | 2.7× |
+| XGBoost | 0.7236 | 0.7265 | 0.7192 | 3.2× |
 
-Averaged over the four models, SMOTE is worth **−0.0017 AUC**. Only XGBoost
-improves at all, by +0.0010, which is inside its own fold-to-fold spread.
-`scale_pos_weight` came in below no-resampling for all four.
+Averaged over the four models, SMOTE is worth **−0.0004 AUC**. It helps exactly
+one model, XGBoost, by +0.0029 — and XGBoost is the weakest of the four and
+carries 2% of the blend weight, so that gain does not reach the final
+prediction. It costs the other three between 0.0002 and 0.0031, and costs
+everyone 1.8× to 3.2× the training time. `scale_pos_weight` came in below
+no-resampling for all four.
 
 The positive rate is 25.8%, which is 2.87:1 — not the regime SMOTE was designed
 for, and one that gradient-boosted trees handle unaided. ROC-AUC is also
@@ -137,9 +141,10 @@ within it each row's value drawn from a nested split it was held out of:
 | LightGBM | 0.7284 | 0.7292 | 0.7137 | 0.7281 |
 | XGBoost | 0.7181 | 0.7183 | 0.7043 | 0.7186 |
 
-The first three columns are the representation as it was; the fourth is the one
-the pipeline now produces, which is why LightGBM's 0.7281 there is the same
-0.7281 as in the table at the top.
+All four were measured on the 33-to-39-feature representation of the time, which
+is why none of them match the table at the top — the discarded columns found in
+the next section were added afterwards. What matters here is the comparison
+between the columns, and all four share a representation and a set of folds.
 
 The leak is worth **−0.0005 AUC**. It is not a leak; it is a leak-shaped thing
 that never had room to leak.
@@ -164,13 +169,64 @@ the out-of-fold version rather than a one-hot.
 
 Reproduce with `python target_encoding_study.py`.
 
-**What this points at next.** `drop_unused_object_columns` discards every object
-column not on its keep-list, and age was on the wrong side of that line by
-accident. Ten others still are: `특정 시술 유형`, `배란 유도 유형`,
+### The rest of the discarded columns
+
+Age had been thrown away by accident, not by judgement — so the same question
+was worth asking of everything else on that side of the line.
+`drop_unused_object_columns` keeps only what is on `columns_to_encode` and
+discards the rest, which was nine columns: `특정 시술 유형`, `배란 유도 유형`,
 `배아 생성 주요 이유`, `난자 출처`, `정자 출처`, `난자 기증자 나이`,
-`정자 기증자 나이`, `시술 시기 코드`, `클리닉 내 총 시술 횟수`, `시술 유형`.
-Each is thrown away without ever having been measured. If one of them is worth
-what the age bracket turned out to be worth, it is being left on the table.
+`정자 기증자 나이`, `시술 시기 코드`, `클리닉 내 총 시술 횟수`. (`시술 유형`
+looks like a tenth but survives as the `시술 유형_원본` copy.)
+
+Each was added to the encoding on its own and the **whole pipeline re-run** —
+feature engineering, selection, encoding and GAIN — because adding a column
+changes what the imputer sees and therefore every value in the matrix. Scored
+by LightGBM on the same five folds:
+
+| Added column | new cols | OOF ROC-AUC | Δ AUC |
+|---|---|---|---|
+| *(baseline, 39 features)* | — | 0.7281 | — |
+| `시술 시기 코드` | 7 | 0.7289 | +0.0009 |
+| `정자 출처` | 4 | 0.7288 | +0.0008 |
+| `배아 생성 주요 이유` | 12 | 0.7288 | +0.0007 |
+| `정자 기증자 나이` | 7 | 0.7288 | +0.0007 |
+| `배란 유도 유형` | 2 | 0.7285 | +0.0005 |
+| `난자 기증자 나이` | 5 | 0.7284 | +0.0004 |
+| `클리닉 내 총 시술 횟수` | 7 | 0.7281 | +0.0000 |
+| `난자 출처` | 3 | 0.7280 | −0.0001 |
+| `특정 시술 유형` | 18 | 0.7275 | −0.0006 |
+
+Nothing here is another age bracket. Every individual effect sits inside the
+fold-to-fold spread, and reading this table as a ranking would be reading noise.
+
+The obvious move — keep the six that helped — is the wrong one, and the study
+checks it rather than assuming. Selecting on these deltas means selecting on
+noise, so the six-column combination was scored against simply taking **all
+nine, unselected**:
+
+| | features | OOF ROC-AUC | OOF F1 |
+|---|---|---|---|
+| baseline | 39 | 0.7281 | 0.5079 |
+| the six with positive deltas | 83 | 0.7303 | 0.5106 |
+| **all nine, no selection** | **104** | **0.7311** | **0.5109** |
+
+Not selecting wins. The filtering was fitting noise, and the simpler rule is
+also the better one. Confirmed on a second model: XGBoost goes 0.7167 → 0.7236,
+**+0.0069**, on the same change.
+
+So all nine are now encoded. For scale, that is worth about as much as the
+entire stacking-and-blending apparatus (+0.003), obtained by not discarding data.
+
+Adding them broke `main.py`, which is worth recording. One-hot names inherit
+whatever was in the category, and these categories contain `:` and `,` —
+`특정 시술 유형_ICSI:IVF`, `배아 생성 주요 이유_기증용, 현재 시술용` — which
+LightGBM rejects outright. The studies never saw it because they hand over bare
+NumPy arrays; only `main.py`'s `StackingClassifier` passes a named DataFrame
+through. `src/encoding.py` now sanitizes the generated names, which leaves the
+feature set at 104 and the numbers above unchanged.
+
+Reproduce with `python column_study.py`.
 
 ### Two leaks that were real
 
