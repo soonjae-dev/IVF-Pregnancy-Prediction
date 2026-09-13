@@ -78,10 +78,14 @@ python -c "import torch; x=torch.randn(2000,200); print((x@x.T).sum())"         
 python -c "import lightgbm, xgboost, catboost; import torch; x=torch.randn(2000,200); print((x@x.T).sum())"   # segfault
 ```
 
-`build_cache.py` runs GAIN in an interpreter that has never imported a boosting
-library, which sidesteps it. If you write a script of your own that needs both,
-keep them in separate processes rather than hunting for an import order that
-happens to survive.
+Both orders crash, so there is no safe import order to find — the two have to
+stay in separate processes. `build_cache.py` runs GAIN in an interpreter that
+has never imported a boosting library, and `src/optimization.py` holds no torch
+at all (the TabTransformer, which needs it, lives in `src/tab_transformer.py`),
+so `tune.py` and the study scripts never load it either.
+
+`main.py` is the exception and is still affected: it needs GAIN and the four
+models in one process. Use the study scripts and `tune.py` on macOS.
 
 ## 2. Search, one model at a time
 

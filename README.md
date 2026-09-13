@@ -35,7 +35,8 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 │   ├── gain_imputer.py    # PyTorch implementation of GAIN for missing values
 │   ├── run_imputation.py  # Wrapper for GAIN execution
 │   ├── data_splitting.py  # Train/Val split and CV strategy
-│   ├── optimization.py    # Hyperparameter tuning using Optuna
+│   ├── optimization.py    # Hyperparameter tuning using Optuna (no torch)
+│   ├── tab_transformer.py # TabTransformer; the only module that needs torch
 │   ├── ensemble.py        # Stacking and Weighted Ensemble logic
 │   └── evaluation.py      # F1 threshold optimization and submission generation
 ├── main.py                # Main execution script
@@ -62,7 +63,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 - **Domain-Knowledge Feature Engineering**: Derived a feature calculating the pregnancy success rate per attempt from the total number of procedures and previous pregnancies. Every categorical column is one-hot encoded, including the ten the pipeline used to discard unread — the age bracket among them, which alone was worth 0.0148 AUC. See [Results](#results).
 - **Advanced Missing Value Imputation**: Generative Adversarial Imputation Nets (GAIN) implemented in PyTorch. The target column is held out of the imputation and both generators are seeded — see [Results](#results) for why both matter.
 - **Imbalanced Data Handling**: none. SMOTE was originally applied to the whole training set; it was first moved inside each cross-validation fold, then measured against no resampling at all, found to change nothing, and removed. The measurement is kept as a script — see [Results](#results).
-- **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for the four tree-based models the pipeline uses (XGBoost, LightGBM, RandomForest, CatBoost). A TabTransformer is also implemented and tunable in `src/optimization.py`, but `main.py` does not call it.
+- **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for the four tree-based models the pipeline uses (XGBoost, LightGBM, RandomForest, CatBoost). A TabTransformer is also implemented and tunable in `src/tab_transformer.py`, but `main.py` does not call it.
 - **Ensemble Strategy**: Predictions are combined through a Stacking Classifier and a weight-searched blend, with the F1 threshold chosen on a held-out calibration split. Both are worth about +0.003 AUC over the best single model — real and consistent across folds, but small; see [Results](#results).
 
 ## Results
@@ -308,7 +309,7 @@ parameters.
 Every `best_value` field in `configs/*.json` is a number from that protocol and
 should be read as a record of what was searched, not as performance. Two of the
 files are not read by any code: `tab_params.json` (the TabTransformer in
-`src/optimization.py` is implemented and tunable, but `main.py` never calls it)
+`src/tab_transformer.py` is implemented and tunable, but `main.py` never calls it)
 and `cs_xgb_params.json` (a cost-sensitive XGBoost variant that did not make it
 into the pipeline). They are kept because they record what was tried.
 
