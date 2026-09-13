@@ -39,7 +39,9 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 │   ├── ensemble.py        # Stacking and Weighted Ensemble logic
 │   └── evaluation.py      # F1 threshold optimization and submission generation
 ├── main.py                # Main execution script
-├── evaluate_cv.py         # Leakage-free CV evaluation (reproduces the Results table)
+├── evaluate_cv.py         # Leakage-free CV evaluation of the SMOTE protocols
+├── resampling_study.py    # Imbalance strategies compared on identical folds
+├── ensemble_study.py      # What the ensembles add over the best single model
 ├── requirements.txt       # Project dependencies
 └── .gitignore
 ```
@@ -52,31 +54,63 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 
 ## Key Engineering Strategies
 - **Domain-Knowledge Feature Engineering**: Derived a new feature calculating the pregnancy success rate based on the total number of procedures and previous pregnancies. Also mapped the average pregnancy success rate by age group using target encoding to capture demographic patterns.
-- **Advanced Missing Value Imputation**: Implemented Generative Adversarial Imputation Nets (GAIN) using PyTorch to recover missing values realistically, upgrading from standard constant imputation.
-- **Imbalanced Data Handling**: SMOTE is applied through an `imblearn.pipeline.Pipeline` step so that oversampling happens **inside each cross-validation fold**, never across fold boundaries. An earlier version resampled before splitting, which leaked synthetic neighbours into validation — see [Results](#results).
+- **Advanced Missing Value Imputation**: Generative Adversarial Imputation Nets (GAIN) implemented in PyTorch. The target column is held out of the imputation and both generators are seeded — see [Results](#results) for why both matter.
+- **Imbalanced Data Handling**: SMOTE is applied through an `imblearn.pipeline.Pipeline` step so that oversampling happens **inside each cross-validation fold**, never across fold boundaries. Measured against no resampling at all it turns out to change nothing — see [Results](#results).
 - **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for tree-based models (XGBoost, LightGBM, RandomForest, CatBoost) and a deep learning model (TabTransformer).
 - **Ensemble Strategy**: Maximized predictive performance by combining predictions through a Stacking Classifier and an Optuna-optimized Weighted Ensemble, targeting the optimal F1 threshold.
 
 ## Results
 
-Evaluated on the full training set: **256,351 rows × 90 features** after feature engineering and GAIN imputation, with a **25.8% positive rate**.
+Evaluated on the full training set: **256,351 rows × 33 features** after feature
+engineering, selection and GAIN imputation, with a **25.8% positive rate**.
 
-**Evaluation protocol.** 5-fold `StratifiedKFold`. SMOTE is fitted on the training portion of each fold only; the validation fold keeps its original class distribution. The F1 decision threshold is chosen on a 20% calibration split carved out of that training portion, then applied to the validation fold, which is never used for any fitting or tuning decision. ROC-AUC is computed on pooled out-of-fold probabilities.
+**Evaluation protocol.** 5-fold `StratifiedKFold`. Each training fold is split
+80/20 into a fit part and a calibration part; base models are fitted on the fit
+part, the ensembles and the F1 threshold are built from calibration
+probabilities alone, and everything is then scored on the validation fold, which
+no fitting or tuning decision has touched. ROC-AUC is computed on pooled
+out-of-fold probabilities.
 
-| Model | OOF ROC-AUC | OOF F1 | Avg. Precision | Threshold |
+| Model | OOF ROC-AUC | OOF F1 |
+|---|---|---|
+| LightGBM | 0.7284 | 0.5082 |
+| RandomForest | 0.7273 | 0.5078 |
+| CatBoost | 0.7225 | 0.5046 |
+| XGBoost | 0.7181 | 0.5019 |
+| Stacked (logistic meta) | 0.7311 | 0.5096 |
+| **Weighted ensemble** | **0.7312** | **0.5105** |
+
+Blend weights, averaged over folds: RandomForest 0.45 · LightGBM 0.41 ·
+CatBoost 0.14 · XGBoost 0.01. The ensemble is worth **+0.0028 AUC and +0.0023
+F1** over the best single model — small, but consistent across all five folds.
+For reference, labelling every case positive yields F1 = 0.4106.
+
+Reproduce with `python ensemble_study.py`.
+
+### Imbalance handling: measured, then dropped
+
+The pipeline was built around SMOTE. On the representation it actually produces,
+SMOTE does nothing:
+
+| Model | no resampling | SMOTE | `scale_pos_weight` | SMOTE cost |
 |---|---|---|---|---|
-| LightGBM | **0.7262** ± 0.0019 | **0.5032** ± 0.0021 | 0.4407 | 0.258 |
-| RandomForest | 0.7229 ± 0.0015 | 0.5022 ± 0.0017 | 0.4318 | 0.326 |
-| XGBoost | 0.7205 ± 0.0016 | 0.4993 ± 0.0015 | 0.4359 | 0.220 |
-| CatBoost | 0.7190 ± 0.0023 | 0.4973 ± 0.0022 | 0.4327 | 0.229 |
-| **Weighted Ensemble** | **0.7304** | **0.5068** | — | 0.281 |
+| XGBoost | 0.7181 | 0.7201 | 0.7136 | 1.9× time |
+| LightGBM | 0.7284 | 0.7283 | 0.7280 | 2.3× |
+| CatBoost | 0.7225 | 0.7207 | 0.7213 | 1.5× |
+| RandomForest | 0.7273 | 0.7255 | 0.7232 | 1.7× |
 
-Ensemble weights: LightGBM 0.40 · RandomForest 0.31 · CatBoost 0.17 · XGBoost 0.11.
-For reference, labelling every case positive yields F1 = 0.411.
+Averaged over the four models, SMOTE is worth **−0.0004 AUC**; the individual
+differences all sit inside the fold-to-fold spread. `scale_pos_weight` was worst
+or tied-worst in three of four.
 
-Reproduce with `python evaluate_cv.py --data data/train_df_imputed.pkl`.
+The positive rate is 25.8%, which is 2.87:1 — not the regime SMOTE was designed
+for, and one that gradient-boosted trees handle unaided. ROC-AUC is also
+threshold-invariant, so most of what resampling does is invisible to it by
+construction. Reproduce with `python resampling_study.py`.
 
-### A note on an earlier, inflated result
+### Two leaks, found and measured
+
+#### 1. SMOTE before the cross-validation split
 
 An earlier version of this pipeline reported CV ROC-AUC ≈ 0.89 — still recorded as `best_value` in `configs/*.json`. That number was wrong, and working out why was the most instructive part of the project.
 
@@ -93,7 +127,45 @@ Re-running that exact protocol on the same data reproduces the inflated figure a
 
 The fix lives in `src/optimization.py`: SMOTE is now a step in an `imblearn.pipeline.Pipeline`, so it is refitted within each fold.
 
-**Known limitation.** The hyperparameters in `configs/*.json` were selected under the leaky protocol and are reused as-is above, so the corrected figures retain a small residual optimism. Re-running the Optuna search under the corrected protocol is the natural next step.
+#### 2. The target column inside the imputer
+
+Fixing the first leak made the pipeline runnable end to end for the first time —
+`src/run_imputation.py` had been calling `gain_impute()` with its import
+commented out, so `main.py` had been dying at step 6 of 10. With GAIN finally
+executing, ROC-AUC jumped from 0.732 to 0.83. Imputation does not do that.
+
+At the point GAIN is called, the training frame carries **34 columns** and the
+test frame **33**. The extra one is the label. GAIN learns the joint
+distribution of everything it is handed and uses it to fill gaps, so all
+**978,332 missing cells** in the training matrix — 11.2% of it — were imputed by
+a generator that had seen that row's outcome. Train and test were also imputed
+by separately trained generators on different column counts, leaving the two in
+different representations.
+
+| Imputation | CV ROC-AUC |
+|---|---|
+| None — `fillna(-1)` | 0.7320 ± 0.0015 |
+| GAIN with the target | 0.7943 ± 0.0007 |
+| GAIN without the target | 0.7302 ± 0.0016 |
+
+The leak was worth **+0.064 AUC**. Once it cannot see the label, GAIN's own
+contribution is **−0.0019** — indistinguishable from skipping it.
+
+`gain_impute` also drew its noise and mini-batches from unseeded generators.
+Three runs on identical input gave 0.8696, 0.8592 and 0.8034: a spread as wide
+as the leak, which made the reported figure a property of the run rather than of
+the method. Both generators are now seeded, and two consecutive runs reproduce
+exactly at 0.7300 ± 0.0017.
+
+This one was introduced by the refactor, not present in the original work: the
+February 2025 notebook's cached imputation scores 0.7294, in the same band as
+the corrected pipeline. The label started riding along with the features when
+the notebook was reorganised into modules.
+
+**Known limitation.** The hyperparameters in `configs/*.json` were selected under
+the leaky protocol and are reused as-is above, so the corrected figures retain a
+small residual optimism. Re-running the Optuna search under the corrected
+protocol is the natural next step.
 
 ## How to Run
 ```bash
