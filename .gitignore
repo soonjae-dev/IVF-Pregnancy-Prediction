@@ -21,4 +21,11 @@ catboost_info/
 # Logs
 logs/
 *.log
+
+# Per-variant caches built by column_study.py
 data/column_cache/
+
+# Optuna study database and interim leaders. The referee comparison is kept,
+# because it is the evidence for whatever ends up in configs/.
+tuning/*
+!tuning/referee.json

@@ -85,7 +85,7 @@ def load_dataset(path: str) -> Tuple[pd.DataFrame, pd.Series]:
 
 
 def build_model(name: str, params: Dict[str, Any]):
-    tuned = {k: v for k, v in params.items() if k != "best_value"}
+    tuned = model_params(params)
     if name == "xgb":
         return xgb.XGBClassifier(random_state=SEED, eval_metric="logloss",
                                  n_jobs=-1, tree_method="hist", **tuned)
@@ -236,7 +236,7 @@ def main() -> None:
             log(f"  ! {name}: no parameter file at {params_path} -- skipping")
             continue
         params = json.load(open(params_path))
-        tuned = {k: v for k, v in params.items() if k != "best_value"}
+        tuned = model_params(params)
         log(f"-- {name} -- params={tuned}")
 
         entry: Dict[str, Any] = {"params": params,

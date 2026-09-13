@@ -44,6 +44,9 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 ├── ensemble_study.py      # What the ensembles add over the best single model
 ├── target_encoding_study.py # Whether the age target encoding leaked, and what it was worth
 ├── column_study.py        # What is in the object columns the pipeline discarded
+├── tune.py                # Resumable hyperparameter search, leakage-free protocol
+├── validate_tuning.py     # Referee split: do the tuned parameters actually win?
+├── TUNING.md              # How to run the re-tuning on a laptop, over days
 ├── requirements.txt       # Project dependencies
 └── .gitignore
 ```
@@ -284,8 +287,22 @@ the notebook was reorganised into modules.
 
 **Known limitation.** The hyperparameters in `configs/*.json` were selected under
 the leaky protocol and are reused as-is above, so the corrected figures retain a
-small residual optimism. Re-running the Optuna search under the corrected
-protocol is the natural next step.
+small residual optimism.
+
+`tune.py` and `validate_tuning.py` are the fix, and [TUNING.md](TUNING.md) is
+the runbook. The search runs on 75% of the data under the corrected protocol and
+is resumable, because it takes days on a laptop; the remaining 25% is a referee
+split the search never sees, used to decide whether the new parameters really
+beat the incumbents before anything is written to `configs/`. A search returns
+the best of everything it tried, and that maximum is inflated by however many
+things it tried — so it cannot be compared against anything, and the referee
+split is what makes the comparison decidable.
+
+Early evidence that this is worth doing: after five LightGBM trials and three
+XGBoost trials, the referee split already shows **+0.0068** and **+0.0130**
+ROC-AUC over the incumbents. The parameters carried forward from the leaky
+search were not merely justified by a wrong number — they were the wrong
+parameters.
 
 Every `best_value` field in `configs/*.json` is a number from that protocol and
 should be read as a record of what was searched, not as performance. Two of the

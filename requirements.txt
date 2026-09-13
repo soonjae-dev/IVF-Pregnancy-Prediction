@@ -8,9 +8,16 @@ xgboost==2.0.3
 lightgbm==4.3.0
 catboost==1.2.5
 torch==2.2.1
+skorch==0.15.0
 
 # Hyperparameter Optimization
 optuna==3.6.1
 
 # Imbalanced Data Handling
+# Still required: resampling_study.py and evaluate_cv.py measure SMOTE, even
+# though the pipeline itself no longer resamples.
 imbalanced-learn==0.12.0
+
+# Plotting (src/feature_selection.py)
+matplotlib==3.8.3
+seaborn==0.13.2

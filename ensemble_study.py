@@ -49,6 +49,8 @@ import catboost as cb
 import lightgbm as lgb
 import xgboost as xgb
 
+from src.optimization import model_params
+
 warnings.filterwarnings("ignore")
 
 TARGET = "임신 성공 여부"   # "pregnancy success"
@@ -114,7 +116,7 @@ def build_dataset():
 
 
 def make_model(name, params):
-    tuned = {k: v for k, v in params.items() if k != "best_value"}
+    tuned = model_params(params)
     if name == "xgb":
         return xgb.XGBClassifier(random_state=SEED, eval_metric="logloss",
                                  n_jobs=-1, tree_method="hist", **tuned)

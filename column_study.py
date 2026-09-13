@@ -39,6 +39,8 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 
 import lightgbm as lgb
 
+from src.optimization import model_params
+
 warnings.filterwarnings("ignore")
 
 TARGET = "임신 성공 여부"
@@ -141,8 +143,7 @@ def main():
                         help="GAIN iterations; matches configs/config.json")
     args = parser.parse_args()
 
-    params = {k: v for k, v in json.load(open("configs/lgb_params.json")).items()
-              if k != "best_value"}
+    params = model_params(json.load(open("configs/lgb_params.json")))
 
     log("baseline — the pipeline as it stands")
     X, y, columns = build(BASE_ENCODE, "baseline", args.iterations)

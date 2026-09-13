@@ -55,6 +55,8 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 import lightgbm as lgb
 import xgboost as xgb
 
+from src.optimization import model_params
+
 warnings.filterwarnings("ignore")
 
 SEED = 42
@@ -79,7 +81,7 @@ def load_cached():
 
 
 def make_model(name, params):
-    tuned = {k: v for k, v in params.items() if k != "best_value"}
+    tuned = model_params(params)
     if name == "lgb":
         return lgb.LGBMClassifier(random_state=SEED, n_jobs=-1, verbose=-1, **tuned)
     if name == "xgb":

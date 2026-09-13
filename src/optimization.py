@@ -46,18 +46,98 @@ def get_device() -> torch.device:
     return device
 
 
+# ---------------------------------------------------------------------------
+# Search spaces
+#
+# One definition each, so main.py's optimize_* functions and tune.py cannot
+# drift apart. Widening a range here widens it for both.
+# ---------------------------------------------------------------------------
+
+def suggest_params(trial, model: str) -> Dict[str, Any]:
+    """Draw one hyperparameter set for `model` from its search space."""
+    if model == "xgb":
+        return {
+            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
+            'max_depth': trial.suggest_int('max_depth', 3, 12),
+            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
+            'subsample': trial.suggest_float('subsample', 0.5, 1.0, step=0.1),
+            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0, step=0.1),
+        }
+    if model == "lgb":
+        return {
+            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
+            'max_depth': trial.suggest_int('max_depth', 3, 12),
+            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
+            'num_leaves': trial.suggest_int('num_leaves', 2, 64),
+            'subsample': trial.suggest_float('subsample', 0.5, 1.0, step=0.1),
+            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0, step=0.1),
+        }
+    if model == "rf":
+        return {
+            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
+            'max_depth': trial.suggest_int('max_depth', 3, 20),
+            'min_samples_split': trial.suggest_int('min_samples_split', 2, 10, step=2),
+            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 5),
+            'bootstrap': trial.suggest_categorical('bootstrap', [True, False]),
+        }
+    if model == "cat":
+        return {
+            'iterations': trial.suggest_int('iterations', 200, 600, step=200),
+            'depth': trial.suggest_int('depth', 4, 10),
+            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
+            'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 1e-4, 10.0, log=True),
+            'random_strength': trial.suggest_float('random_strength', 1e-4, 10.0, log=True),
+            'bagging_temperature': trial.suggest_float('bagging_temperature', 0, 10),
+        }
+    raise ValueError(f"unknown model: {model}")
+
+
+# Keys that live in configs/*.json and tuning/best_params/*.json alongside the
+# real hyperparameters: provenance, not settings. Anything starting with "_" is
+# treated the same way. Passing one of these to a model constructor is a
+# TypeError, so every consumer goes through model_params() rather than each
+# remembering its own exclusion list.
+METADATA_KEYS = {"best_value", "tuning_cv_auc", "referee_auc"}
+
+
+def model_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Strip provenance fields, leaving only what a model constructor accepts."""
+    return {k: v for k, v in params.items()
+            if k not in METADATA_KEYS and not k.startswith("_")}
+
+
+def load_params(model: str, config_dir: str = "configs") -> Dict[str, Any]:
+    """Read configs/<model>_params.json, metadata already stripped."""
+    import json
+    import pathlib
+
+    path = pathlib.Path(config_dir) / f"{model}_params.json"
+    with open(path, encoding="utf-8") as handle:
+        return model_params(json.load(handle))
+
+
+def build_model(model: str, params: Dict[str, Any], seed: int = 42):
+    """Instantiate one of the four base models from a parameter dict."""
+    tuned = model_params(params)
+    if model == "xgb":
+        return xgb.XGBClassifier(random_state=seed, eval_metric='logloss',
+                                 n_jobs=-1, tree_method='hist', **tuned)
+    if model == "lgb":
+        return lgb.LGBMClassifier(random_state=seed, n_jobs=-1, verbose=-1, **tuned)
+    if model == "rf":
+        return RandomForestClassifier(random_state=seed, n_jobs=-1, **tuned)
+    if model == "cat":
+        return cb.CatBoostClassifier(random_state=seed, verbose=0, thread_count=-1,
+                                     allow_writing_files=False, **tuned)
+    raise ValueError(f"unknown model: {model}")
+
+
 def optimize_xgboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: int = 20) -> Tuple[Dict[str, Any], float]:
     """
     Optimize hyperparameters for XGBoost using Optuna.
     """
     def objective_xgb(trial):
-        params = {
-            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
-            'max_depth': trial.suggest_int('max_depth', 3, 12),
-            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
-            'subsample': trial.suggest_float('subsample', 0.5, 1.0, step=0.1),
-            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0, step=0.1)
-        }
+        params = suggest_params(trial, "xgb")
         xgb_model = xgb.XGBClassifier(
             random_state=42,
             use_label_encoder=False,
@@ -86,14 +166,7 @@ def optimize_lightgbm(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: 
     Optimize hyperparameters for LightGBM using Optuna.
     """
     def objective_lgb(trial):
-        params = {
-            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
-            'max_depth': trial.suggest_int('max_depth', 3, 12),
-            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
-            'num_leaves': trial.suggest_int('num_leaves', 2, 64),
-            'subsample': trial.suggest_float('subsample', 0.5, 1.0, step=0.1),
-            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0, step=0.1)
-        }
+        params = suggest_params(trial, "lgb")
         lgb_model = lgb.LGBMClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
@@ -117,13 +190,7 @@ def optimize_random_forest(X_train: np.ndarray, y_train: np.ndarray, rskf, n_tri
     Optimize hyperparameters for RandomForest using Optuna.
     """
     def objective_rf(trial):
-        params = {
-            'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
-            'max_depth': trial.suggest_int('max_depth', 3, 20),
-            'min_samples_split': trial.suggest_int('min_samples_split', 2, 10, step=2),
-            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 5),
-            'bootstrap': trial.suggest_categorical('bootstrap', [True, False])
-        }
+        params = suggest_params(trial, "rf")
         rf_model = RandomForestClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
@@ -147,14 +214,7 @@ def optimize_catboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: 
     Optimize hyperparameters for CatBoost using Optuna.
     """
     def objective_cat(trial):
-        params = {
-            'iterations': trial.suggest_int('iterations', 200, 600, step=200),
-            'depth': trial.suggest_int('depth', 4, 10),
-            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
-            'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 1e-4, 10.0, log=True),
-            'random_strength': trial.suggest_float('random_strength', 1e-4, 10.0, log=True),
-            'bagging_temperature': trial.suggest_float('bagging_temperature', 0, 10)
-        }
+        params = suggest_params(trial, "cat")
         cat_model = cb.CatBoostClassifier(random_state=42, verbose=0, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
