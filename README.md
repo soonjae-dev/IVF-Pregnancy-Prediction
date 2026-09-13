@@ -62,9 +62,9 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 ## Key Engineering Strategies
 - **Domain-Knowledge Feature Engineering**: Derived a feature calculating the pregnancy success rate per attempt from the total number of procedures and previous pregnancies. Every categorical column is one-hot encoded, including the ten the pipeline used to discard unread — the age bracket among them, which alone was worth 0.0148 AUC. See [Results](#results).
 - **Advanced Missing Value Imputation**: Generative Adversarial Imputation Nets (GAIN) implemented in PyTorch. The target column is held out of the imputation and both generators are seeded — see [Results](#results) for why both matter.
-- **Imbalanced Data Handling**: none. SMOTE was originally applied to the whole training set; it was first moved inside each cross-validation fold, then measured against no resampling at all, found to change nothing, and removed. The measurement is kept as a script — see [Results](#results).
-- **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for the four tree-based models the pipeline uses (XGBoost, LightGBM, RandomForest, CatBoost). A TabTransformer is also implemented and tunable in `src/tab_transformer.py`, but `main.py` does not call it.
-- **Ensemble Strategy**: Predictions are combined through a Stacking Classifier and a weight-searched blend, with the F1 threshold chosen on a held-out calibration split. Both are worth about +0.003 AUC over the best single model — real and consistent across folds, but small; see [Results](#results).
+- **Imbalanced Data Handling**: none. SMOTE was originally applied to the whole training set; it was first moved inside each cross-validation fold, then measured against no resampling at all and found to lose to it in all four models, and removed. The measurement is kept as a script — see [Results](#results).
+- **Hyperparameter Optimization**: Optuna, re-run under a leakage-free protocol on a 75% tuning split, with the remaining 25% held back to decide whether the new parameters actually beat the old ones. Worth +0.0148 AUC to XGBoost and +0.0142 to CatBoost — see [Results](#results) and [TUNING.md](TUNING.md). A TabTransformer is also implemented and tunable in `src/tab_transformer.py`, but `main.py` does not call it.
+- **Ensemble Strategy**: A Stacking Classifier and a weight-searched blend, with the F1 threshold chosen on a held-out calibration split. Both are implemented and both are now worth **nothing** — +0.0002 AUC over a single LightGBM, and behind it on F1. [Results](#results) explains why.
 
 ## Results
 
@@ -81,40 +81,75 @@ out-of-fold probabilities.
 
 | Model | OOF ROC-AUC | OOF F1 |
 |---|---|---|
-| RandomForest | 0.7319 | 0.5113 |
-| LightGBM | 0.7311 | 0.5109 |
-| CatBoost | 0.7239 | 0.5050 |
-| XGBoost | 0.7236 | 0.5057 |
-| **Stacked (logistic meta)** | **0.7346** | **0.5139** |
-| **Weighted ensemble** | **0.7348** | **0.5142** |
+| **LightGBM** | **0.7385** | 0.5156 |
+| XGBoost | 0.7384 | 0.5154 |
+| CatBoost | 0.7381 | **0.5161** |
+| RandomForest | 0.7333 | 0.5126 |
+| Stacked (logistic meta) | 0.7384 | 0.5159 |
+| Weighted ensemble | 0.7386 | 0.5156 |
 
-Blend weights, averaged over folds: RandomForest 0.55 · LightGBM 0.33 ·
-CatBoost 0.10 · XGBoost 0.02. Either ensemble is worth about **+0.003 AUC and
-+0.003 F1** over the best single model — small, but consistent across all five
-folds. The two are tied to within 0.0002, well inside the fold-to-fold spread;
-nothing here says one beats the other. For reference, labelling every case
-positive yields F1 = 0.4106.
+Fold-to-fold F1 spread is ±0.0012, and every figure in the top five rows sits
+inside a 0.0005 band of ROC-AUC. Read that as: after tuning, they are the same
+model. Labelling every case positive yields F1 = 0.4106.
+
+Blend weights, averaged over folds: LightGBM 0.57 · CatBoost 0.29 ·
+XGBoost 0.10 · RandomForest 0.04.
 
 Reproduce with `python ensemble_study.py`.
+
+### The ensemble stopped being worth anything
+
+Before the hyperparameters were re-tuned, the weighted blend beat the best
+single model by +0.0038 AUC, consistently across folds. That was the number
+this README reported and the reason the ensemble was there.
+
+After re-tuning, on the same protocol:
+
+| | best single | weighted | stacked |
+|---|---|---|---|
+| ROC-AUC | 0.7385 | 0.7386 (+0.0002) | 0.7384 (−0.0000) |
+| OOF F1 | 0.5161 | 0.5156 (−0.0005) | 0.5159 (−0.0002) |
+
+It buys **+0.0002 AUC**, and on F1 the best single model — CatBoost — is ahead
+of both ensembles. Against a fold spread of ±0.0012 there is nothing here.
+
+The explanation is in the base models. Before tuning they ranged over 0.0083 of
+AUC; now they sit within 0.0004 of each other. Averaging models that disagree
+recovers something; averaging models that agree recovers their common answer.
+The ensemble's value had been compensating for badly tuned base models, and the
+tuning removed the thing it was compensating for. The weights show the same
+collapse from the other side: RandomForest went from 0.55 of the blend to 0.04.
+
+The code stays — it runs, and `main.py` still emits both submissions — but a
+single LightGBM is the defensible default now, and this section is here so that
+nobody reads the ensemble as load-bearing.
 
 ### Imbalance handling: measured, then dropped
 
 The pipeline was built around SMOTE. On the representation it actually produces,
-SMOTE does nothing:
+with parameters tuned honestly, SMOTE is worse than doing nothing:
 
 | Model | no resampling | SMOTE | `scale_pos_weight` | SMOTE cost |
 |---|---|---|---|---|
-| RandomForest | 0.7319 | 0.7307 | 0.7278 | 1.8× time |
-| LightGBM | 0.7311 | 0.7309 | 0.7303 | 2.9× |
-| CatBoost | 0.7239 | 0.7208 | 0.7224 | 2.7× |
-| XGBoost | 0.7236 | 0.7265 | 0.7192 | 3.2× |
+| LightGBM | 0.7385 | 0.7369 | 0.7383 | 2.2× time |
+| XGBoost | 0.7384 | 0.7357 | 0.7383 | 2.3× |
+| CatBoost | 0.7381 | 0.7375 | 0.7380 | 2.4× |
+| RandomForest | 0.7333 | 0.7313 | 0.7326 | 1.8× |
 
-Averaged over the four models, SMOTE is worth **−0.0004 AUC**. It helps exactly
-one model, XGBoost, by +0.0029 — and XGBoost is the weakest of the four and
-carries 2% of the blend weight, so that gain does not reach the final
-prediction. It costs the other three between 0.0002 and 0.0031, and costs
-everyone 1.8× to 3.2× the training time. `scale_pos_weight` came in below
-no-resampling for all four.
+SMOTE loses to plain training in **all four**, by −0.0017 on average, at
+1.8× to 2.4× the training time. `scale_pos_weight` is nearly free and nearly
+neutral — between −0.0001 and −0.0007 — but never better.
+
+An earlier run of this table, before the hyperparameters were re-tuned, had one
+exception: XGBoost gained +0.0029 from SMOTE. That exception is gone, and where
+it went is the interesting part. XGBoost was the worst-tuned of the four under
+the leaky-protocol parameters, and resampling was partly making up for it. Given
+parameters chosen honestly, XGBoost now loses the most of any model (−0.0027).
+
+That is the same shape as what happened to the ensemble: a technique that
+appeared to earn its place was compensating for a defect elsewhere, and stopped
+earning it once the defect was fixed. Neither was measured against a properly
+tuned baseline when it was adopted.
 
 The positive rate is 25.8%, which is 2.87:1 — not the regime SMOTE was designed
 for, and one that gradient-boosted trees handle unaided. ROC-AUC is also
@@ -220,8 +255,10 @@ Not selecting wins. The filtering was fitting noise, and the simpler rule is
 also the better one. Confirmed on a second model: XGBoost goes 0.7167 → 0.7236,
 **+0.0069**, on the same change.
 
-So all nine are now encoded. For scale, that is worth about as much as the
-entire stacking-and-blending apparatus (+0.003), obtained by not discarding data.
+So all nine are now encoded. For scale, at the time it was measured that was
+worth about as much as the entire stacking-and-blending apparatus, obtained by
+not discarding data. The apparatus has since been re-measured at nothing, which
+makes the comparison less flattering to the apparatus than it was meant to be.
 
 Adding them broke `main.py`, which is worth recording. One-hot names inherit
 whatever was in the category, and these categories contain `:` and `,` —
@@ -230,6 +267,10 @@ LightGBM rejects outright. The studies never saw it because they hand over bare
 NumPy arrays; only `main.py`'s `StackingClassifier` passes a named DataFrame
 through. `src/encoding.py` now sanitizes the generated names, which leaves the
 feature set at 104 and the numbers above unchanged.
+
+Every number in this section was measured before the hyperparameters were
+re-tuned, so none of them match the table at the top. The comparison is between
+columns, and all of it shares one set of parameters and one set of folds.
 
 Reproduce with `python column_study.py`.
 
@@ -287,31 +328,61 @@ February 2025 notebook's cached imputation scores 0.7294, in the same band as
 the corrected pipeline. The label started riding along with the features when
 the notebook was reorganised into modules.
 
-**Known limitation.** The hyperparameters in `configs/*.json` were selected under
-the leaky protocol and are reused as-is above, so the corrected figures retain a
-small residual optimism.
+### Re-tuning the hyperparameters
 
-`tune.py` and `validate_tuning.py` are the fix, and [TUNING.md](TUNING.md) is
-the runbook. The search runs on 75% of the data under the corrected protocol and
-is resumable, because it takes days on a laptop; the remaining 25% is a referee
-split the search never sees, used to decide whether the new parameters really
-beat the incumbents before anything is written to `configs/`. A search returns
+The parameters in `configs/*.json` were chosen by the leaky search. Fixing the
+protocol did not re-pick them, so every figure above until recently was produced
+by parameters selected to be good at exploiting a leak.
+
+`tune.py` searches again under the corrected protocol, and
+[TUNING.md](TUNING.md) is the runbook: resumable to a SQLite study, because it
+runs over days on a laptop. It sees 75% of the data. The other 25% is a referee
+split, used to choose nothing during the search, and `validate_tuning.py` fits
+both parameter sets on the tuning split and scores them there before anything is
+written to `configs/`. That separation is the whole design — a search returns
 the best of everything it tried, and that maximum is inflated by however many
-things it tried — so it cannot be compared against anything, and the referee
-split is what makes the comparison decidable.
+things it tried, so it cannot be compared against an incumbent's single score.
 
-Early evidence that this is worth doing: after five LightGBM trials and three
-XGBoost trials, the referee split already shows **+0.0068** and **+0.0130**
-ROC-AUC over the incumbents. The parameters carried forward from the leaky
-search were not merely justified by a wrong number — they were the wrong
-parameters.
+On the referee split, with 164 completed LightGBM trials, 121 XGBoost, and
+around 50 each for RandomForest and CatBoost:
 
-Every `best_value` field in `configs/*.json` is a number from that protocol and
-should be read as a record of what was searched, not as performance. Two of the
-files are not read by any code: `tab_params.json` (the TabTransformer in
-`src/tab_transformer.py` is implemented and tunable, but `main.py` never calls it)
-and `cs_xgb_params.json` (a cost-sensitive XGBoost variant that did not make it
-into the pipeline). They are kept because they record what was tried.
+| Model | leaky-protocol params | re-tuned | Δ AUC |
+|---|---|---|---|
+| XGBoost | 0.7250 | 0.7404 | **+0.0154** |
+| CatBoost | 0.7255 | 0.7406 | **+0.0151** |
+| LightGBM | 0.7323 | 0.7406 | +0.0083 |
+| RandomForest | 0.7336 | 0.7352 | +0.0016 |
+
+All four were adopted. The published figures at the top of this section are
+measured on the result.
+
+Two things are worth reading off that table. The first is that the leaky search
+did not merely justify itself with a wrong number — it picked the wrong
+parameters, and the models it hurt most were the ones that had looked weakest.
+The second is the convergence: after tuning, the three boosting models land
+within 0.0002 of each other on the referee split. What had looked like
+differences between model families was mostly differences in how badly each had
+been mis-tuned.
+
+A further 50 trials each for RandomForest and CatBoost afterwards improved
+nothing — every model came back `keep incumbent`. That is the signal to stop:
+three independent searches converging on the same number is a property of the
+data, not of the search.
+
+**What is still optimistic.** The referee split settles *which* parameters to
+use. The figures above are still cross-validated over all the data, including
+the 75% the search saw, so a little optimism remains. Removing it takes nested
+cross-validation — a separate search inside each outer fold — which is five
+searches instead of one.
+
+**On `configs/`.** Each replaced file is kept beside its replacement as
+`<model>_params.leaky.json`, so what the leaky search chose is still in the
+repository. `best_value` in those files is a number from that protocol and
+records what was searched, not performance. Two configs are read by no code:
+`tab_params.json` (the TabTransformer in `src/tab_transformer.py` is implemented
+and tunable, but `main.py` never calls it) and `cs_xgb_params.json` (a
+cost-sensitive XGBoost variant that did not make it into the pipeline). They are
+kept because they record what was tried.
 
 ## How to Run
 ```bash
