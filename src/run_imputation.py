@@ -12,8 +12,7 @@ import numpy as np
 import pandas as pd
 from typing import Tuple
 
-# Assuming gain_impute is imported from the previously created module
-# from src.gain_imputer import gain_impute
+from src.gain_imputer import gain_impute
 
 def run_gain_on_dataframes(
     train_df: pd.DataFrame, 
