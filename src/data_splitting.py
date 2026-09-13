@@ -2,16 +2,20 @@
 ===============================================================================
 Data Splitting and Resampling (src/data_splitting.py)
 ===============================================================================
-This module handles splitting the dataset into training and validation sets,
-applying SMOTE to address class imbalance, and defining the cross-validation 
-strategy for robust model evaluation.
+This module handles splitting the dataset into training and validation sets
+and defining the cross-validation strategy for model evaluation.
+
+No resampling happens here. The pipeline used to apply SMOTE to the whole
+training set at this point; `resampling_study.py` measures what that is worth
+on the representation this pipeline actually produces (-0.0004 ROC-AUC averaged
+over the four base models, at 1.5-2.3x the training time), so it was removed
+rather than kept as a default nobody had checked.
 """
 
 import numpy as np
 import pandas as pd
 from typing import Tuple
 from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
-from imblearn.over_sampling import SMOTE
 
 def split_data(
     df: pd.DataFrame, 
@@ -39,30 +43,6 @@ def split_data(
     return X_train, X_val, y_train, y_val
 
 
-def apply_smote(
-    X_train: pd.DataFrame, 
-    y_train: pd.Series, 
-    random_state: int = 42
-) -> Tuple[pd.DataFrame, pd.Series]:
-    """
-    Apply SMOTE (Synthetic Minority Over-sampling Technique) to the training 
-    data to synthesize samples for the minority class.
-    
-    Note: SMOTE should strictly be applied ONLY to the training set to prevent 
-    data leakage into the validation set.
-    """
-    print("[INFO] Applying SMOTE to balance the training data...")
-    
-    smote = SMOTE(random_state=random_state)
-    X_train_sm, y_train_sm = smote.fit_resample(X_train, y_train)
-    
-    class_counts = np.bincount(y_train_sm.astype(int))
-    print(f"[INFO] After SMOTE, Train shape: {X_train_sm.shape}")
-    print(f"[INFO] Class distribution after SMOTE: {class_counts}")
-    
-    return X_train_sm, y_train_sm
-
-
 def get_cv_strategy(
     n_splits: int = 5, 
     n_repeats: int = 2, 
@@ -83,19 +63,16 @@ def get_cv_strategy(
 
 
 def prepare_training_data(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
     target_col: str = "임신 성공 여부"
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.DataFrame, pd.Series, RepeatedStratifiedKFold]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, RepeatedStratifiedKFold]:
     """
-    Execute the full data splitting and resampling pipeline.
+    Execute the full data splitting pipeline.
     """
     # 1. Train/Validation Split
     X_train, X_val, y_train, y_val = split_data(df, target_col)
-    
-    # 2. Apply SMOTE
-    X_train_sm, y_train_sm = apply_smote(X_train, y_train)
-    
-    # 3. Setup CV Strategy
+
+    # 2. Setup CV Strategy
     rskf = get_cv_strategy()
-    
-    return X_train, X_val, y_train, y_val, X_train_sm, y_train_sm, rskf
+
+    return X_train, X_val, y_train, y_val, rskf

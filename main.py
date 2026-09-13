@@ -73,14 +73,14 @@ def main():
         iterations=config["imputation"]["gain_iterations"]
     )
     
-    # 7. Data Splitting & Resampling (SMOTE)
-    logger.info("[7] Splitting Data & Applying SMOTE...")
-    X_train, X_val, y_train, y_val, X_train_sm, y_train_sm, rskf = prepare_training_data(train_df)
-    
+    # 7. Data Splitting
+    # No resampling. SMOTE used to be applied to the whole training set here;
+    # resampling_study.py measures it as worth -0.0004 ROC-AUC on this
+    # representation, at 1.5-2.3x the training time, so it was dropped.
+    logger.info("[7] Splitting Data...")
+    X_train, X_val, y_train, y_val, rskf = prepare_training_data(train_df)
+
     # 8. Hyperparameter Optimization
-    # NOTE: pass the ORIGINAL (un-resampled) training data. SMOTE is applied
-    #       inside optimization.py's imblearn Pipeline, to the training portion
-    #       of each CV fold only.
     logger.info("[8] Optimizing Hyperparameters...")
     n_trials = config["optimization"]["n_trials"]
     best_xgb, _ = optimize_xgboost(X_train, y_train, rskf, n_trials=n_trials)
@@ -93,13 +93,13 @@ def main():
     
     # 9.1 Stacking Ensemble
     stacking_clf = build_stacking_classifier(best_xgb, best_lgb, best_rf, best_cat)
-    stacking_clf.fit(X_train_sm, y_train_sm)
+    stacking_clf.fit(X_train, y_train)
     val_pred_stack = stacking_clf.predict_proba(X_val)[:, 1]
     best_thresh_s, stack_auc, _ = optimize_threshold_and_evaluate(y_val, val_pred_stack, "Stacking")
     
     # 9.2 Weighted Ensemble
     weights, val_auc_ens, val_ens_proba = optimize_weighted_ensemble(
-        X_train_sm, y_train_sm, X_val, y_val,
+        X_train, y_train, X_val, y_val,
         best_xgb, best_lgb, best_rf, best_cat, 
         n_trials=config["optimization"]["ensemble_trials"]
     )
@@ -112,23 +112,23 @@ def main():
         use_label_encoder=False, 
         eval_metric='logloss', 
         **best_xgb
-    ).fit(X_train_sm, y_train_sm)
+    ).fit(X_train, y_train)
     
     lgb_model = lgb.LGBMClassifier(
         random_state=config["pipeline"]["seed"], 
         **best_lgb
-    ).fit(X_train_sm, y_train_sm)
+    ).fit(X_train, y_train)
     
     rf_model = RandomForestClassifier(
         random_state=config["pipeline"]["seed"], 
         **best_rf
-    ).fit(X_train_sm, y_train_sm)
+    ).fit(X_train, y_train)
     
     cat_model = cb.CatBoostClassifier(
         random_state=config["pipeline"]["seed"], 
         verbose=0, 
         **best_cat
-    ).fit(X_train_sm, y_train_sm)
+    ).fit(X_train, y_train)
     
     generate_submissions(
         stacking_clf, xgb_model, lgb_model, rf_model, cat_model,

@@ -2,9 +2,16 @@
 ===============================================================================
 Hyperparameter Optimization using Optuna (src/optimization.py)
 ===============================================================================
-This module defines Optuna objective functions and optimization studies for 
-multiple machine learning models (XGBoost, LightGBM, RandomForest, CatBoost) 
+This module defines Optuna objective functions and optimization studies for
+multiple machine learning models (XGBoost, LightGBM, RandomForest, CatBoost)
 and a custom deep learning model (TabTransformer via Skorch).
+
+Every objective scores a scikit-learn Pipeline, not a bare estimator, so the
+scaler is fitted on each fold's training part alone. An earlier version applied
+SMOTE to the whole training set before `cross_val_score` and reported CV
+ROC-AUC around 0.90; the fix was to move resampling inside the pipeline, and
+`resampling_study.py` then showed the resampling itself was not doing anything,
+so the step was removed entirely. See the README.
 """
 
 import optuna
@@ -16,8 +23,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, Tuple
 
-from imblearn.pipeline import Pipeline  # imblearn, so SMOTE runs inside each CV fold
-from imblearn.over_sampling import SMOTE
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from skorch import NeuralNetClassifier
@@ -60,7 +66,6 @@ def optimize_xgboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: i
         )
         pipe = Pipeline([
             ('scaler', StandardScaler()),
-            ('smote', SMOTE(random_state=42)),
             ('xgb', xgb_model)
         ])
         scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
@@ -92,7 +97,6 @@ def optimize_lightgbm(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: 
         lgb_model = lgb.LGBMClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
-            ('smote', SMOTE(random_state=42)),
             ('lgb', lgb_model)
         ])
         scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
@@ -123,7 +127,6 @@ def optimize_random_forest(X_train: np.ndarray, y_train: np.ndarray, rskf, n_tri
         rf_model = RandomForestClassifier(random_state=42, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
-            ('smote', SMOTE(random_state=42)),
             ('rf', rf_model)
         ])
         scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
@@ -155,7 +158,6 @@ def optimize_catboost(X_train: np.ndarray, y_train: np.ndarray, rskf, n_trials: 
         cat_model = cb.CatBoostClassifier(random_state=42, verbose=0, **params)
         pipe = Pipeline([
             ('scaler', StandardScaler()),
-            ('smote', SMOTE(random_state=42)),
             ('cat', cat_model)
         ])
         scores = cross_val_score(pipe, X_train, y_train, cv=rskf, scoring='roc_auc', n_jobs=-1)
@@ -314,7 +316,6 @@ def optimize_tab_transformer(X_train: np.ndarray, y_train: np.ndarray, rskf, dev
 
         pipe = Pipeline([
             ('scaler', StandardScaler()),
-            ('smote', SMOTE(random_state=42)),
             ('tab', net)
         ])
 

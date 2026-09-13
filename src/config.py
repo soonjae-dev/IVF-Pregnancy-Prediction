@@ -39,10 +39,6 @@ from sklearn.ensemble import StackingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 
-# Imbalanced-learn Libraries
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline as ImbPipeline
-
 # Gradient Boosting & PyTorch Integration
 import lightgbm as lgb
 import xgboost as xgb

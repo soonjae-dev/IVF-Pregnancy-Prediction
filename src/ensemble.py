@@ -69,8 +69,8 @@ def build_stacking_classifier(
 
 
 def optimize_weighted_ensemble(
-    X_train_sm: np.ndarray,
-    y_train_sm: np.ndarray,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
     X_val: np.ndarray,
     y_val: np.ndarray,
     best_params_xgb: Dict[str, Any],
@@ -89,10 +89,10 @@ def optimize_weighted_ensemble(
     cat_model = cb.CatBoostClassifier(random_state=42, verbose=0, **best_params_cat)
 
     print("[INFO] Training base models for Weighted Ensemble...")
-    xgb_model.fit(X_train_sm, y_train_sm)
-    lgb_model.fit(X_train_sm, y_train_sm)
-    rf_model.fit(X_train_sm, y_train_sm)
-    cat_model.fit(X_train_sm, y_train_sm)
+    xgb_model.fit(X_train, y_train)
+    lgb_model.fit(X_train, y_train)
+    rf_model.fit(X_train, y_train)
+    cat_model.fit(X_train, y_train)
 
     val_pred_xgb = xgb_model.predict_proba(X_val)[:, 1]
     val_pred_lgb = lgb_model.predict_proba(X_val)[:, 1]

@@ -34,7 +34,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 │   ├── encoding.py        # One-Hot encoding and train/test column synchronization
 │   ├── gain_imputer.py    # PyTorch implementation of GAIN for missing values
 │   ├── run_imputation.py  # Wrapper for GAIN execution
-│   ├── data_splitting.py  # Train/Val split and SMOTE application
+│   ├── data_splitting.py  # Train/Val split and CV strategy
 │   ├── optimization.py    # Hyperparameter tuning using Optuna
 │   ├── ensemble.py        # Stacking and Weighted Ensemble logic
 │   └── evaluation.py      # F1 threshold optimization and submission generation
@@ -55,7 +55,7 @@ Developed for the LG Aimers Hackathon, this project focuses on building an AI mo
 ## Key Engineering Strategies
 - **Domain-Knowledge Feature Engineering**: Derived a new feature calculating the pregnancy success rate based on the total number of procedures and previous pregnancies. Also mapped the average pregnancy success rate by age group using target encoding to capture demographic patterns.
 - **Advanced Missing Value Imputation**: Generative Adversarial Imputation Nets (GAIN) implemented in PyTorch. The target column is held out of the imputation and both generators are seeded — see [Results](#results) for why both matter.
-- **Imbalanced Data Handling**: SMOTE is applied through an `imblearn.pipeline.Pipeline` step so that oversampling happens **inside each cross-validation fold**, never across fold boundaries. Measured against no resampling at all it turns out to change nothing — see [Results](#results).
+- **Imbalanced Data Handling**: none. SMOTE was originally applied to the whole training set; it was first moved inside each cross-validation fold, then measured against no resampling at all, found to change nothing, and removed. The measurement is kept as a script — see [Results](#results).
 - **Hyperparameter Optimization**: Utilized Optuna to fine-tune critical parameters for tree-based models (XGBoost, LightGBM, RandomForest, CatBoost) and a deep learning model (TabTransformer).
 - **Ensemble Strategy**: Maximized predictive performance by combining predictions through a Stacking Classifier and an Optuna-optimized Weighted Ensemble, targeting the optimal F1 threshold.
 
@@ -108,6 +108,12 @@ for, and one that gradient-boosted trees handle unaided. ROC-AUC is also
 threshold-invariant, so most of what resampling does is invisible to it by
 construction. Reproduce with `python resampling_study.py`.
 
+The pipeline therefore no longer resamples anywhere: `prepare_training_data`
+returns the split untouched and `src/optimization.py` scores a plain
+`sklearn.pipeline.Pipeline`. That also removes the last place resampled rows
+could reach a meta learner — `StackingClassifier` runs its own internal
+cross-validation, which was previously being handed a SMOTE'd training set.
+
 ### Two leaks, found and measured
 
 #### 1. SMOTE before the cross-validation split
@@ -125,7 +131,7 @@ Re-running that exact protocol on the same data reproduces the inflated figure a
 | CatBoost | 0.9039 ± 0.0008 | 0.7190 ± 0.0023 | −0.185 |
 | RandomForest | 0.9088 ± 0.0009 | 0.7229 ± 0.0015 | −0.186 |
 
-The fix lives in `src/optimization.py`: SMOTE is now a step in an `imblearn.pipeline.Pipeline`, so it is refitted within each fold.
+The first fix was to make SMOTE a step in an `imblearn.pipeline.Pipeline` in `src/optimization.py`, so that it is refitted within each fold. The section above is what happened when that corrected version was then measured against no resampling at all.
 
 #### 2. The target column inside the imputer
 
