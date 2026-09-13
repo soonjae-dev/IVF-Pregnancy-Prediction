@@ -109,6 +109,9 @@ def run(model, trials, hours, folds):
     X_tune, y_tune = tuning_split(X, y)
     log(f"{model}: tuning on {len(y_tune):,} rows x {X.shape[1]} features "
         f"({len(y) - len(y_tune):,} held back for the referee)")
+    limit = (f"{trials} trials" if trials else "no trial limit")
+    clock = (f", stopping after {hours}h" if hours else "")
+    log(f"  {limit}{clock}")
 
     STUDY_DB.parent.mkdir(parents=True, exist_ok=True)
     study = optuna.create_study(
@@ -197,10 +200,12 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model", choices=MODELS,
                         help="which model to tune; one at a time")
-    parser.add_argument("--trials", type=int, default=50,
-                        help="trials to add in this run (default 50)")
+    parser.add_argument("--trials", type=int, default=None,
+                        help="trials to add in this run (default 50, "
+                             "or unlimited when --hours is given)")
     parser.add_argument("--hours", type=float, default=None,
-                        help="stop after this many hours, whatever the trial count")
+                        help="stop after this many hours; with no --trials, "
+                             "the clock is the only limit")
     parser.add_argument("--folds", type=int, default=3,
                         help="inner CV folds per trial (default 3)")
     parser.add_argument("--status", action="store_true",
@@ -213,8 +218,15 @@ def main():
     if not args.model:
         parser.error("--model is required (or use --status)")
 
+    # --hours on its own means "run for this long". Leaving the trial default
+    # in place would have capped it silently: optuna stops at whichever limit
+    # arrives first, so `--hours 6` used to end after 50 trials.
+    trials = args.trials
+    if trials is None:
+        trials = None if args.hours else 50
+
     started = time.time()
-    run(args.model, args.trials, args.hours, args.folds)
+    run(args.model, trials, args.hours, args.folds)
     log(f"elapsed {(time.time() - started) / 60:.1f} min")
 
 
