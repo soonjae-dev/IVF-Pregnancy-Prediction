@@ -12,6 +12,9 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 
+# GAIN imputation cache
+data/gain_cache.npz
+
 # CatBoost training artefacts
 catboost_info/
 
