@@ -1,8 +1,9 @@
 {
-  "n_estimators": 500,
-  "max_depth": 12,
-  "learning_rate": 0.055921668881914896,
-  "subsample": 1.0,
+  "n_estimators": 400,
+  "max_depth": 5,
+  "learning_rate": 0.02333627909999965,
+  "subsample": 0.9,
   "colsample_bytree": 0.7,
-  "best_value": 0.8903108667670321
+  "referee_auc": 0.7404277851657481,
+  "_note": "Selected by tune.py on a 75% tuning split under a leakage-free protocol, then beaten against the previous parameters on the 25% referee split. referee_auc is that held-out score, not the figure the README reports."
 }

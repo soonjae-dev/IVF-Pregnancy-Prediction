@@ -1,9 +1,10 @@
 {
   "iterations": 600,
-  "depth": 10,
-  "learning_rate": 0.16875733121988645,
-  "l2_leaf_reg": 9.270339013269199,
-  "random_strength": 0.7854311286304455,
-  "bagging_temperature": 0.4354216527018384,
-  "best_value": 0.8910392388769723
+  "depth": 5,
+  "learning_rate": 0.03300611744028219,
+  "l2_leaf_reg": 0.06217903870484771,
+  "random_strength": 0.07151919601603257,
+  "bagging_temperature": 4.239993974287455,
+  "referee_auc": 0.7405627133034283,
+  "_note": "Selected by tune.py on a 75% tuning split under a leakage-free protocol, then beaten against the previous parameters on the 25% referee split. referee_auc is that held-out score, not the figure the README reports."
 }
