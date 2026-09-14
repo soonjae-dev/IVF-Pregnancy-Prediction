@@ -19,6 +19,11 @@ measuring a different pipeline from the one that ships. Each variant is then
 scored by LightGBM on the same five folds, with the F1 threshold taken from a
 calibration split carved out of each training fold.
 
+Then two combinations are scored against each other: the columns that showed a
+positive delta, and all nine unselected. Selecting on those deltas is selecting
+on noise, and whether that selection beats taking everything is the question the
+section in the README turns on, so the script has to produce both.
+
 The baseline is the pipeline exactly as it stands.
 
 Usage:
@@ -140,19 +145,35 @@ def main():
         with open(args.out, "w") as handle:
             json.dump(results, handle, ensure_ascii=False, indent=2)
 
+    # Two combinations, and the comparison between them is the point of the
+    # script. Keeping only the columns with a positive delta is selecting on
+    # those deltas, and the deltas are noise -- so the honest check is whether
+    # that selection beats not selecting at all.
     helpful = [c for c, e in results["candidates"].items() if e["delta_auc"] > 0]
-    if helpful:
-        log(f"together: {', '.join(helpful)}")
-        X, y, columns = build(BASE_ENCODE + helpful, "combined", args.iterations)
+    combinations = [("combined", helpful, "the ones with a positive delta"),
+                    ("all", CANDIDATES, "all nine, unselected")]
+
+    for tag, columns_to_add, label in combinations:
+        if not columns_to_add:
+            continue
+        log(f"{label}: {', '.join(columns_to_add)}")
+        X, y, columns = build(BASE_ENCODE + list(columns_to_add), tag, args.iterations)
         entry = score(X, y, params)
         entry["features"] = len(columns)
-        entry["columns"] = helpful
+        entry["columns"] = list(columns_to_add)
+        entry["label"] = label
         entry["delta_auc"] = entry["oof_auc"] - baseline["oof_auc"]
         entry["delta_f1"] = entry["f1_mean"] - baseline["f1_mean"]
-        results["combined"] = entry
+        results[tag] = entry
         log(f"  {len(columns)} features   AUC {entry['oof_auc']:.4f} "
             f"({entry['delta_auc']:+.4f})   F1 {entry['f1_mean']:.4f} "
             f"({entry['delta_f1']:+.4f})")
+
+    if "combined" in results and "all" in results:
+        gap = results["all"]["oof_auc"] - results["combined"]["oof_auc"]
+        results["selection_cost_auc"] = float(gap)
+        log(f"selecting on the deltas is worth {gap:+.4f} AUC "
+            f"(negative means not selecting wins)")
 
     print()
     log("summary — OOF ROC-AUC against the current pipeline")
@@ -164,11 +185,13 @@ def main():
         print(f"  {candidate:24s}{entry['added_columns']:>6d}"
               f"{entry['oof_auc']:>10.4f}{entry['delta_auc']:>+10.4f}"
               f"{entry['delta_f1']:>+10.4f}")
-    if "combined" in results:
-        entry = results["combined"]
-        print(f"  {'(all that helped)':24s}{entry['features']:>6d}"
-              f"{entry['oof_auc']:>10.4f}{entry['delta_auc']:>+10.4f}"
-              f"{entry['delta_f1']:>+10.4f}")
+    for tag, caption in (("combined", "(only those that helped)"),
+                         ("all", "(all nine, unselected)")):
+        if tag in results:
+            entry = results[tag]
+            print(f"  {caption:24s}{entry['features']:>6d}"
+                  f"{entry['oof_auc']:>10.4f}{entry['delta_auc']:>+10.4f}"
+                  f"{entry['delta_f1']:>+10.4f}")
 
     with open(args.out, "w") as handle:
         json.dump(results, handle, ensure_ascii=False, indent=2)
