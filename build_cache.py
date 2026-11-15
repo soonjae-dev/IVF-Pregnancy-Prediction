@@ -32,10 +32,12 @@ Usage:
 import argparse
 import hashlib
 import json
+import os
 import pathlib
 import subprocess
 import sys
 import time
+from datetime import datetime
 
 import numpy as np
 
@@ -54,7 +56,7 @@ REQUIRED_KEYS = {"X", "y", "columns", "X_test", "test_ids", "spec"}
 ROOT = pathlib.Path(__file__).resolve().parent
 CONFIG = pathlib.Path("configs/config.json")
 # Every source file whose behaviour shapes the cached matrix.
-SOURCES = ["build_cache.py", "src/preprocessing.py", "src/features.py",
+SOURCES = ["build_cache.py", "src/config.py", "src/preprocessing.py", "src/features.py",
            "src/feature_selection.py", "src/encoding.py", "src/run_imputation.py",
            "src/gain_imputer.py"]
 
@@ -98,10 +100,24 @@ def stored_spec(path):
 
 
 def _set_aside(path):
-    """Keep a stale cache under a new name instead of deleting it."""
-    stale = path.with_name(f"{path.stem}.stale-{time.strftime('%Y%m%dT%H%M%S')}{path.suffix}")
-    path.rename(stale)
-    return stale
+    """
+    Keep a stale cache under a new name instead of deleting it.
+
+    The name carries microseconds and a counter, and the move never replaces an
+    existing file: os.link fails if the target exists (rename would overwrite it
+    silently on POSIX), so two set-asides in the same instant both survive.
+    """
+    stamp = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
+    for counter in range(1000):
+        suffix = "" if counter == 0 else f"-{counter}"
+        stale = path.with_name(f"{path.stem}.stale-{stamp}{suffix}{path.suffix}")
+        try:
+            os.link(path, stale)
+        except FileExistsError:
+            continue
+        path.unlink()
+        return stale
+    raise RuntimeError(f"could not find a free name to keep {path}")
 
 
 def ensure_cache(out=DEFAULT_CACHE, encode=None, iterations=None, quiet=False):

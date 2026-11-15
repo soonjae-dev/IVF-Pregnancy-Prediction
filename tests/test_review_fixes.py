@@ -78,8 +78,37 @@ class TestCacheSpec(unittest.TestCase):
 
     def test_spec_covers_preprocessing_sources(self):
         sources = build_cache.cache_spec()["sources"]
-        for name in ["src/gain_imputer.py", "src/encoding.py", "src/feature_selection.py"]:
+        for name in ["src/gain_imputer.py", "src/encoding.py", "src/feature_selection.py",
+                     "src/config.py"]:
             self.assertIn(name, sources)
+
+    def test_changing_config_module_changes_spec(self):
+        # A copy of the repository's source files, so the real ones are untouched.
+        root = pathlib.Path("repo")
+        for name in build_cache.SOURCES:
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((build_cache.ROOT / name).read_bytes())
+        with mock.patch.object(build_cache, "ROOT", root.resolve()):
+            before = build_cache.cache_spec()
+            with (root / "src/config.py").open("a") as handle:
+                handle.write("\n# device selection changed\n")
+            after = build_cache.cache_spec()
+        self.assertNotEqual(before["sources"]["src/config.py"], after["sources"]["src/config.py"])
+        self.assertNotEqual(before, after)
+
+    def test_set_aside_twice_in_the_same_instant_keeps_both(self):
+        frozen = build_cache.datetime(2026, 11, 15, 12, 0, 0, 123456)
+        with mock.patch.object(build_cache, "datetime") as clock:
+            clock.now.return_value = frozen
+            self.cache.write_bytes(b"first")
+            first = build_cache._set_aside(self.cache)
+            self.cache.write_bytes(b"second")
+            second = build_cache._set_aside(self.cache)
+        self.assertNotEqual(first, second)
+        self.assertEqual(first.read_bytes(), b"first")
+        self.assertEqual(second.read_bytes(), b"second")
+        self.assertFalse(self.cache.exists())
 
 
 class TestVariantOrder(unittest.TestCase):

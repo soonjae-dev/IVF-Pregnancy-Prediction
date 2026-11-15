@@ -51,7 +51,7 @@ LightGBM (250 trees).
 | Variant | OOF ROC-AUC | Compared with | Pooled difference | Folds up |
 |---|---:|---|---:|---:|
 | `baseline` | 0.73922 | | | |
-| `median_flags0`: only the type 4 bug fixed | 0.73940 | `baseline` | +0.00018 | 5/5 |
+| `median_flags0`: treat flag blanks as 0 (median otherwise) | 0.73940 | `baseline` | +0.00018 | 5/5 |
 | `native_nan` | 0.73953 | `baseline` | +0.00032 | 4/5 |
 | `typed_median` | 0.73937 | `median_flags0` | −0.00003 | 3/5 |
 | `typed_nan` | 0.73956 | `native_nan` | +0.00002 | 2/5 |

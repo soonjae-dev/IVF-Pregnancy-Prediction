@@ -30,6 +30,7 @@ data/column_cache/
 tuning/*
 !tuning/referee.json
 .venv/
+.venv-legacy/
 
 # Subsampled evaluate_cv runs
 cv_results_sample*.json

@@ -34,7 +34,20 @@ and runs this suite on every push and pull request.
 The full `requirements.txt` is optional for the legacy training, tuning and study
 scripts. Install it in a separate virtual environment rather than on top of the baseline
 environment: it adds XGBoost, imbalanced-learn, skorch and a pinned PyTorch, and without
-them `main.py`, `evaluate_cv.py` and the `*_study.py` scripts fail at import. Those scripts have validation limitations and are outside this supported
+them `main.py`, `evaluate_cv.py` and the `*_study.py` scripts fail at import.
+
+```bash
+uv venv --python 3.11 .venv-legacy        # or: python3.11 -m venv .venv-legacy
+uv pip install --python .venv-legacy/bin/python -r requirements.txt
+```
+
+`.venv-legacy/` is ignored by Git. On 2026-11-15 this environment imported every legacy
+script, passed the synthetic-data test suite, and was used to check the cache path end to
+end on a 2,000-row extract in a temporary directory: the first request built the cache,
+identical requests reused it, and changing the GAIN iterations, the encoded columns or the
+training CSV each kept the old file as `.stale-<timestamp>.npz` and rebuilt it.
+`evaluate_cv.py` built the cache on its first run and reused it on the second with
+identical results. No full-data legacy run was repeated. Those scripts have validation limitations and are outside this supported
 baseline workflow. Installing their dependencies does not correct their design.
 See the [archived notebook guide](archive/NOTEBOOK.md) for the historical notebook.
 

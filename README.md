@@ -111,8 +111,9 @@ I measured this comparison twice.
 - **First measurement**: on the competition-time GAIN-imputed data
   (`train_df_imputed.pkl`, 90 features) ([record](cv_results.json)). The pkl is kept
   locally and not published, because it is derived from the competition data.
-- **Re-measurement**: on a GAIN cache rebuilt with the current code (104 features, after
-  the GAIN bug fixes), running the same comparison again
+- **Re-measurement**: on a GAIN cache rebuilt with the code as of 2026-11-14 (104 features,
+  after the GAIN loss fixes and before the later evaluation-mode fix), running the same
+  comparison again
   ([record](results/smote_placement_20261114.json)). The extra features come from a change
   in categorical handling after the competition, not from GAIN: nine categorical columns
   that were discarded at the time (egg source, treatment period code and others) are now

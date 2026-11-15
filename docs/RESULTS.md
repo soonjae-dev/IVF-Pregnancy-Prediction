@@ -72,7 +72,7 @@ from the competition data. On 2026-11-15 its label order was checked to be ident
 [`results/smote_placement_20261114.json`](../results/smote_placement_20261114.json)
 reruns `evaluate_cv.py` with the competition-time parameters
 (`--params-dir` pointing to copies of `configs/*_params.leaky.json`) on a GAIN cache
-rebuilt by the current `build_cache.py` (256,351 rows × 104 features). Package versions:
+rebuilt by `build_cache.py` as of 2026-11-14 (256,351 rows × 104 features). Package versions:
 scikit-learn 1.4.1.post1, xgboost 2.0.3, lightgbm 4.3.0, catboost 1.2.5,
 imbalanced-learn 0.12.0, torch 2.2.1 (GAIN), numpy 1.26.4, pandas 2.2.1.
 
