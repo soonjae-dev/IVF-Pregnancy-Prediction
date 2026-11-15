@@ -43,6 +43,7 @@ independence.
 | [Standalone full run](../results/baseline_20261110T144314_638320Z/summary.json) | Earlier source version; identical predictions. |
 | [Earlier full summary](../results/baseline_cv_full.json) | Same metrics; lacks environment/source provenance. |
 | [Improvement ladder](../results/improve_20261115T064857_957864Z/comparison.json) | Same folds; its `baseline` step reproduces the reference metrics exactly. See [IMPROVEMENT.md](experiments/IMPROVEMENT.md). |
+| [Missing-value types](../results/missing_types_20261115T072026_459803Z/comparison.json) | Same folds; its `baseline` step reproduces the reference metrics exactly. See [MISSING_TYPES.md](experiments/MISSING_TYPES.md). |
 | [5,000-row sample](../results/baseline_cv_sample_5000.json) | Three-fold smoke run; reproduced exactly by the current source. Not comparable with the full baseline. |
 
 ## Comparison with the competition pipeline

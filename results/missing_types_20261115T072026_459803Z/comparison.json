@@ -1,0 +1,1080 @@
+{
+  "question": "Does encoding each type of missing value explicitly raise OOF ROC-AUC?",
+  "settings": {
+    "trials": 25,
+    "sample": null,
+    "seed": 42,
+    "not_applicable_day_value": -1.0,
+    "day_rules": {
+      "배아 이식 경과일": [
+        "이식된 배아 수",
+        0
+      ],
+      "배아 해동 경과일": [
+        "동결 배아 사용 여부",
+        0
+      ],
+      "난자 채취 경과일": [
+        "수집된 신선 난자 수",
+        0
+      ],
+      "난자 혼합 경과일": [
+        "혼합된 난자 수",
+        0
+      ],
+      "난자 해동 경과일": [
+        "해동 난자 수",
+        0
+      ]
+    }
+  },
+  "provenance": {
+    "recorded_at_utc": "2026-11-15T07:20:24.904917+00:00",
+    "dataset": {
+      "filename": "train.csv",
+      "sha256": "205c73f52ce2f157916b9b75b4cfededb634702f67c7f1cdc153b37c9f1492e2",
+      "bytes": 84117328
+    },
+    "environment": {
+      "python": "3.11.18",
+      "platform": "macOS-27.2.1-arm64-arm-64bit",
+      "packages": {
+        "numpy": "1.26.4",
+        "pandas": "2.2.1",
+        "scikit-learn": "1.4.1.post1",
+        "lightgbm": "4.3.0",
+        "catboost": "1.2.5",
+        "optuna": "3.6.1",
+        "scipy": "1.17.1"
+      }
+    },
+    "code": {
+      "commit": "67c43abafc75b3a8e0e6294a64bbbcd31a08a389",
+      "dirty": true,
+      "baseline_cv_sha256": "fb0d971a315d7f5a2e0811572efa8ff4d58e250bddb1a8b30b2a4b60943a0531",
+      "missing_types_cv_sha256": "f06a5d289ebb0261f39af8954f29a0abc4adee71f7d5774449a0badaa1ed8dd1",
+      "improve_cv_sha256": "7c4df3d1f5cbbf627cf57c965020b3219b14c8a04eb4cbc6e03580ab4c8703b8"
+    },
+    "configuration": {
+      "folds": 5,
+      "sample": null,
+      "estimators": 250,
+      "seed": 42
+    }
+  },
+  "variants": {
+    "baseline": {
+      "oof_roc_auc": 0.7392190176246645,
+      "oof_average_precision": 0.44869181682272186,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7370015415567628,
+          "average_precision": 0.4489999979451903
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7419594041292795,
+          "average_precision": 0.45107484853145413
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7392326649258438,
+          "average_precision": 0.44935120229708786
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7377994629948189,
+          "average_precision": 0.4449876293609603
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7401952584822974,
+          "average_precision": 0.4502539483961807
+        }
+      ],
+      "fold_details": [
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "elapsed_seconds": 15.256001500005368,
+      "oof_artifact": {
+        "filename": "baseline_oof.csv",
+        "sha256": "4456624079c236294b62eeab401cde9d319da8f28df751f5aa3d77f588c7d2f7"
+      }
+    },
+    "native_nan": {
+      "oof_roc_auc": 0.7395344253370089,
+      "oof_average_precision": 0.4493820468909157,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7368182214808773,
+          "average_precision": 0.4487501911948365
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7425290011811486,
+          "average_precision": 0.4516324305141508
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7398118700096225,
+          "average_precision": 0.45051364150435547
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7379196021575445,
+          "average_precision": 0.44569949887545934
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7406781460434138,
+          "average_precision": 0.4515262211273291
+        }
+      ],
+      "fold_details": [
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "elapsed_seconds": 12.763452958999551,
+      "oof_artifact": {
+        "filename": "native_nan_oof.csv",
+        "sha256": "fa7e0b1a6ca4342ebaaa227d2b4684d7d3c7962f61760b9ad8c58214545c2066"
+      }
+    },
+    "median_flags0": {
+      "oof_roc_auc": 0.7394018138131271,
+      "oof_average_precision": 0.4489818239256584,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.737192142061072,
+          "average_precision": 0.44949990186205196
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7420420731130722,
+          "average_precision": 0.4515770214327998
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7395410352957178,
+          "average_precision": 0.4497240475381844
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.737943360962548,
+          "average_precision": 0.4450319747424746
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7403562292753492,
+          "average_precision": 0.4502315303387382
+        }
+      ],
+      "fold_details": [
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ]
+        }
+      ],
+      "elapsed_seconds": 14.848512291995576,
+      "oof_artifact": {
+        "filename": "median_flags0_oof.csv",
+        "sha256": "485993a9a4bec6fe3ef6cef9fce82dbb6686606005fa9549f6ba0e0b1b018af4"
+      }
+    },
+    "typed_median": {
+      "oof_roc_auc": 0.7393740588242499,
+      "oof_average_precision": 0.4488360425786336,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7372258381153954,
+          "average_precision": 0.4486101568198364
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7421640865804991,
+          "average_precision": 0.4513391484559406
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7397065241644037,
+          "average_precision": 0.449988381513989
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7376337509636149,
+          "average_precision": 0.44573844725679607
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7402386433924659,
+          "average_precision": 0.4495031959267111
+        }
+      ],
+      "fold_details": [
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        }
+      ],
+      "elapsed_seconds": 14.752484833006747,
+      "oof_artifact": {
+        "filename": "typed_median_oof.csv",
+        "sha256": "2e091916128c970045b2d7ba10057aef512ee5454aea6e34f1870f6344ba0700"
+      }
+    },
+    "typed_nan": {
+      "oof_roc_auc": 0.7395582870540599,
+      "oof_average_precision": 0.44915154894019615,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7373342136556575,
+          "average_precision": 0.4503605441828556
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7424283839013345,
+          "average_precision": 0.4514971652208862
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7398581936691528,
+          "average_precision": 0.45005727635698994
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7378429342717627,
+          "average_precision": 0.44544145355002873
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7404435083618445,
+          "average_precision": 0.44968007337034993
+        }
+      ],
+      "fold_details": [
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ]
+        }
+      ],
+      "elapsed_seconds": 13.20457379099389,
+      "oof_artifact": {
+        "filename": "typed_nan_oof.csv",
+        "sha256": "32fd53d682da3301aca75131ebe1a494efa119d1c8016a0181c69411ad3f3f0f"
+      }
+    },
+    "nan_tuned": {
+      "oof_roc_auc": 0.7400032535877759,
+      "oof_average_precision": 0.4501988065581785,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7379474056053343,
+          "average_precision": 0.4507592969609357
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7428513527365344,
+          "average_precision": 0.45287931320305946
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7403508480368834,
+          "average_precision": 0.4519137204613863
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7378079100625402,
+          "average_precision": 0.44534413274774487
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7411076351120246,
+          "average_precision": 0.4512381201827958
+        }
+      ],
+      "fold_details": [
+        {
+          "params": {
+            "num_leaves": 19,
+            "min_child_samples": 97,
+            "colsample_bytree": 0.32407196478065287,
+            "subsample": 0.954660201039391,
+            "reg_lambda": 0.014407524139905934
+          },
+          "n_estimators": 722,
+          "inner_auc": 0.7365290503853315
+        },
+        {
+          "params": {
+            "num_leaves": 33,
+            "min_child_samples": 427,
+            "colsample_bytree": 0.8123957592679836,
+            "subsample": 0.7993292420985183,
+            "reg_lambda": 0.004994757081068292
+          },
+          "n_estimators": 355,
+          "inner_auc": 0.739356672279633
+        },
+        {
+          "params": {
+            "num_leaves": 33,
+            "min_child_samples": 427,
+            "colsample_bytree": 0.8123957592679836,
+            "subsample": 0.7993292420985183,
+            "reg_lambda": 0.004994757081068292
+          },
+          "n_estimators": 599,
+          "inner_auc": 0.7416544086603102
+        },
+        {
+          "params": {
+            "num_leaves": 19,
+            "min_child_samples": 97,
+            "colsample_bytree": 0.32407196478065287,
+            "subsample": 0.954660201039391,
+            "reg_lambda": 0.014407524139905934
+          },
+          "n_estimators": 794,
+          "inner_auc": 0.7424601162660193
+        },
+        {
+          "params": {
+            "num_leaves": 30,
+            "min_child_samples": 79,
+            "colsample_bytree": 0.9543150859996735,
+            "subsample": 0.5589274773065606,
+            "reg_lambda": 4.4090854979805
+          },
+          "n_estimators": 396,
+          "inner_auc": 0.7387718336916587
+        }
+      ],
+      "elapsed_seconds": 687.1338177500002,
+      "oof_artifact": {
+        "filename": "nan_tuned_oof.csv",
+        "sha256": "9f993c26a1725d22f69573716443a58732eead3887d9811ad15a1bd6e104b778"
+      }
+    },
+    "nan_catboost": {
+      "oof_roc_auc": 0.7401519055393007,
+      "oof_average_precision": 0.45011880299811124,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7384108375341722,
+          "average_precision": 0.4494222646066224
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7431736477040075,
+          "average_precision": 0.453397911021734
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7400193530661341,
+          "average_precision": 0.4518074381928881
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7380809005487098,
+          "average_precision": 0.4459719689791432
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7411213316913348,
+          "average_precision": 0.45092676569039747
+        }
+      ],
+      "fold_details": [
+        {
+          "iterations": 1568
+        },
+        {
+          "iterations": 1532
+        },
+        {
+          "iterations": 829
+        },
+        {
+          "iterations": 971
+        },
+        {
+          "iterations": 869
+        }
+      ],
+      "elapsed_seconds": 566.0501217499987,
+      "oof_artifact": {
+        "filename": "nan_catboost_oof.csv",
+        "sha256": "d822465a9d53cd97b16936911a97fa7e3d6cd82a1c0ef4c6f201c2d78e8c31d3"
+      }
+    },
+    "nan_blend": {
+      "oof_roc_auc": 0.7405238856156184,
+      "oof_average_precision": 0.4511130151009503,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7385810232565712,
+          "average_precision": 0.45136094844948305
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7434357390890189,
+          "average_precision": 0.45412742389456595
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7407720676106424,
+          "average_precision": 0.452924510467245
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7382960640115119,
+          "average_precision": 0.44621169967084545
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7415381327857364,
+          "average_precision": 0.45169494187731285
+        }
+      ],
+      "fold_details": [
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "elapsed_seconds": 0.3745325000054436,
+      "oof_artifact": {
+        "filename": "nan_blend_oof.csv",
+        "sha256": "4fa18d5021c0d0636f16c51d9eab46975c6b7a95240d410ce5f7d7fe70731d01"
+      }
+    },
+    "typed_tuned": {
+      "oof_roc_auc": 0.7400372441094913,
+      "oof_average_precision": 0.44985430095163603,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7378897548171292,
+          "average_precision": 0.45035412046154144
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7429457125845313,
+          "average_precision": 0.4527529457037246
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7404353923639575,
+          "average_precision": 0.4517387659594849
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7379218050066777,
+          "average_precision": 0.4453037795115742
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7410302475031146,
+          "average_precision": 0.4499928081817363
+        }
+      ],
+      "fold_details": [
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "params": {
+            "num_leaves": 26,
+            "min_child_samples": 180,
+            "colsample_bytree": 0.5625756376838713,
+            "subsample": 0.8947385331597324,
+            "reg_lambda": 7.423824795786331
+          },
+          "n_estimators": 509,
+          "inner_auc": 0.7366353838509513
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "params": {
+            "num_leaves": 17,
+            "min_child_samples": 108,
+            "colsample_bytree": 0.4814970086286975,
+            "subsample": 0.6428182071446251,
+            "reg_lambda": 0.05893167670335163
+          },
+          "n_estimators": 685,
+          "inner_auc": 0.7394117596330123
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "params": {
+            "num_leaves": 33,
+            "min_child_samples": 427,
+            "colsample_bytree": 0.8123957592679836,
+            "subsample": 0.7993292420985183,
+            "reg_lambda": 0.004994757081068292
+          },
+          "n_estimators": 495,
+          "inner_auc": 0.7414993122301432
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "params": {
+            "num_leaves": 25,
+            "min_child_samples": 78,
+            "colsample_bytree": 0.5904722053365115,
+            "subsample": 0.5301293960866109,
+            "reg_lambda": 0.3089338400415894
+          },
+          "n_estimators": 441,
+          "inner_auc": 0.7427200191934041
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "params": {
+            "num_leaves": 19,
+            "min_child_samples": 97,
+            "colsample_bytree": 0.32407196478065287,
+            "subsample": 0.954660201039391,
+            "reg_lambda": 0.014407524139905934
+          },
+          "n_estimators": 1030,
+          "inner_auc": 0.7389439731401536
+        }
+      ],
+      "elapsed_seconds": 682.2369314170064,
+      "oof_artifact": {
+        "filename": "typed_tuned_oof.csv",
+        "sha256": "89b30e6243a554efcc8c98e35c37632899c97740964a13177af32092c49516b0"
+      }
+    },
+    "typed_catboost": {
+      "oof_roc_auc": 0.7399151068623571,
+      "oof_average_precision": 0.44945038845990115,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.738375707034925,
+          "average_precision": 0.44914778127630056
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7428670474437528,
+          "average_precision": 0.4526313065479095
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7401186400336153,
+          "average_precision": 0.45155601658915856
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7377078298315782,
+          "average_precision": 0.44515243726044046
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7405625634726309,
+          "average_precision": 0.44971938034032793
+        }
+      ],
+      "fold_details": [
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "iterations": 1309
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "iterations": 1049
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "iterations": 830
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "iterations": 1049
+        },
+        {
+          "flag_columns": [
+            "착상 전 유전 검사 사용 여부",
+            "PGD 시술 여부",
+            "PGS 시술 여부"
+          ],
+          "di_zero_columns": 28,
+          "day_columns": [
+            "배아 이식 경과일",
+            "배아 해동 경과일",
+            "난자 채취 경과일",
+            "난자 혼합 경과일",
+            "난자 해동 경과일"
+          ],
+          "iterations": 1661
+        }
+      ],
+      "elapsed_seconds": 603.6166468329902,
+      "oof_artifact": {
+        "filename": "typed_catboost_oof.csv",
+        "sha256": "e2304b2a5b7abdf6846bfe0d9f7b897ab88fa4472d1e61ca710fb496eea94f05"
+      }
+    },
+    "typed_blend": {
+      "oof_roc_auc": 0.7403888142907977,
+      "oof_average_precision": 0.4504307979940446,
+      "fold_results": [
+        {
+          "fold": 1,
+          "roc_auc": 0.7385162637762551,
+          "average_precision": 0.4509428609246458
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.7432601189984237,
+          "average_precision": 0.45323375998212706
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.7407665656770979,
+          "average_precision": 0.45267759245959416
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.7381685161678126,
+          "average_precision": 0.44565250299676357
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.7412393523862596,
+          "average_precision": 0.4505409601223934
+        }
+      ],
+      "fold_details": [
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "elapsed_seconds": 0.3760037920001196,
+      "oof_artifact": {
+        "filename": "typed_blend_oof.csv",
+        "sha256": "2950e8c24202a6e3f39be851f323731bf56e72c1d3321aad64fe8769351ccc0b"
+      }
+    }
+  },
+  "paired": {
+    "native_nan vs baseline": {
+      "fold_auc_deltas": [
+        -0.00018332007588550692,
+        0.0005695970518690974,
+        0.0005792050837786222,
+        0.00012013916272557434,
+        0.000482887561116363
+      ],
+      "mean_fold_delta": 0.00031370175672083,
+      "sd_fold_delta": 0.0003350729155901269,
+      "positive_folds": 4,
+      "pooled_auc_delta": 0.00031540771234439546
+    },
+    "median_flags0 vs baseline": {
+      "fold_auc_deltas": [
+        0.00019060050430919073,
+        8.266898379272192e-05,
+        0.00030837036987396704,
+        0.0001438979677290675,
+        0.00016097079305177342
+      ],
+      "mean_fold_delta": 0.0001773017237513441,
+      "sd_fold_delta": 8.320714098971508e-05,
+      "positive_folds": 5,
+      "pooled_auc_delta": 0.00018279618846261947
+    },
+    "typed_median vs median_flags0": {
+      "fold_auc_deltas": [
+        3.369605432346212e-05,
+        0.00012201346742690689,
+        0.00016548886868594792,
+        -0.00030960999893303587,
+        -0.00011758588288324212
+      ],
+      "mean_fold_delta": -2.119949827599221e-05,
+      "sd_fold_delta": 0.0001941951168454285,
+      "positive_folds": 3,
+      "pooled_auc_delta": -2.77549888771933e-05
+    },
+    "typed_nan vs native_nan": {
+      "fold_auc_deltas": [
+        0.0005159921747802665,
+        -0.00010061727981414137,
+        4.632365953038953e-05,
+        -7.666788578175598e-05,
+        -0.000234637681569283
+      ],
+      "mean_fold_delta": 3.0078597429095133e-05,
+      "sd_fold_delta": 0.0002893643201354905,
+      "positive_folds": 2,
+      "pooled_auc_delta": 2.3861717051043563e-05
+    },
+    "typed_nan vs typed_median": {
+      "fold_auc_deltas": [
+        0.00010837554026210672,
+        0.0002642973208353272,
+        0.0001516695047490968,
+        0.00020918330814778674,
+        0.0002048649693785487
+      ],
+      "mean_fold_delta": 0.00018767812867457324,
+      "sd_fold_delta": 5.961099389133047e-05,
+      "positive_folds": 5,
+      "pooled_auc_delta": 0.00018422822981001286
+    },
+    "typed_tuned vs nan_tuned": {
+      "fold_auc_deltas": [
+        -5.7650788205187986e-05,
+        9.435984799699426e-05,
+        8.454432707405424e-05,
+        0.00011389494413749368,
+        -7.738760890996232e-05
+      ],
+      "mean_fold_delta": 3.155214441867838e-05,
+      "sd_fold_delta": 9.132134027829746e-05,
+      "positive_folds": 3,
+      "pooled_auc_delta": 3.399052171548789e-05
+    },
+    "typed_catboost vs nan_catboost": {
+      "fold_auc_deltas": [
+        -3.513049924719347e-05,
+        -0.0003066002602547524,
+        9.928696748118249e-05,
+        -0.0003730707171315517,
+        -0.0005587682187038201
+      ],
+      "mean_fold_delta": -0.00023485654557122703,
+      "sd_fold_delta": 0.000264911056160124,
+      "positive_folds": 1,
+      "pooled_auc_delta": -0.0002367986769435948
+    },
+    "typed_blend vs nan_blend": {
+      "fold_auc_deltas": [
+        -6.475948031603451e-05,
+        -0.00017562009059524097,
+        -5.501933544538318e-06,
+        -0.00012754784369928274,
+        -0.000298780399476839
+      ],
+      "mean_fold_delta": -0.0001344419495263871,
+      "sd_fold_delta": 0.00011206188955863862,
+      "positive_folds": 0,
+      "pooled_auc_delta": -0.0001350713248207125
+    },
+    "typed_blend vs baseline": {
+      "fold_auc_deltas": [
+        0.001514722219492337,
+        0.0013007148691441817,
+        0.001533900751254036,
+        0.0003690531729937385,
+        0.0010440939039622066
+      ],
+      "mean_fold_delta": 0.0011524969833692999,
+      "sd_fold_delta": 0.0004806713870060706,
+      "positive_folds": 5,
+      "pooled_auc_delta": 0.0011697966661332604
+    }
+  },
+  "interpretation": "One seed and five folds that share training rows; deltas are descriptive, not independent replicates or a significance test."
+}

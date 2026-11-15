@@ -7,7 +7,7 @@
 > **Summary**: My competition result was in the lower half (Private 544/794, AUC 0.714).
 > A post-competition analysis confirmed validation leakage: the leaky evaluation reported a cross-validation AUC about 0.18 higher than evaluation on original validation rows.
 > I then rebuilt a reproducible baseline that learns only inside each fold (cross-validation AUC 0.739).
-> On the same folds, changing the missing-value handling moved AUC by at most 0.0003; nested tuning and a LightGBM–CatBoost rank blend raised it to 0.740.
+> On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003; nested tuning and a LightGBM–CatBoost rank blend raised it to 0.7405.
 
 ## 1. Project Overview
 
@@ -199,8 +199,9 @@ but their pattern is clearly different from the other groups.
   features.
 
 The effect of these choices on the score is checked in
-[5-5](#5-5-missing-value-indicator-experiment) and
-[5-6](#5-6-what-actually-raised-the-score).
+[5-5](#5-5-missing-value-indicator-experiment),
+[5-6](#5-6-what-actually-raised-the-score) and
+[5-7](#5-7-handling-each-type-of-missing-value).
 
 ### 5-4. A leak-free baseline
 
@@ -227,6 +228,10 @@ numeric and 2 are strings (specific treatment type, main reason for embryo creat
   [5-5](#5-5-missing-value-indicator-experiment) adds those indicators.
 - The "not applicable" gaps of DI rows are also filled with medians. The model can
   still separate DI rows through the treatment-type column.
+- All numeric gaps get the same treatment, whatever they mean. For three yes/no columns
+  (PGS, PGD, pre-implantation genetic testing) only "yes" (1) is ever recorded and a blank
+  means "no", so the median of 1 turns "no" into "yes". The effect of this and of each
+  other type of gap is measured in [5-7](#5-7-handling-each-type-of-missing-value).
 - The ten count columns (for example total treatments, stored as `0회` … `6회 이상`)
   are strings in the raw file, so the baseline one-hot encodes them as categories rather
   than numbers.
@@ -306,6 +311,44 @@ cannot be compared with the 1st-place public score of 0.74350. One seed was used
 small differences are descriptive. Details and the full protocol:
 [docs/experiments/IMPROVEMENT.md](docs/experiments/IMPROVEMENT.md).
 
+### 5-7. Handling each type of missing value
+
+Not every gap means the same thing. Checked against the other columns, the 31 columns
+with gaps fall into five types
+([details and counts](docs/experiments/MISSING_TYPES.md)):
+
+| Type | Example | Size |
+|---|---|---|
+| 1. DI not applicable | Embryo and egg counts of DI treatments | 21 columns, all 6,291 DI rows |
+| 2. Step not performed | Transfer day when no embryo was transferred | 5 elapsed-day columns; e.g. 36,535 IVF rows with no transfer |
+| 3. Truly missing | Embryos were transferred but the transfer day is blank | About 1,600 IVF rows |
+| 4. "No" left blank | PGS, PGD and genetic-testing flags record only 1 | 3 columns, 99% blank |
+| 5. Unknown | Years since the last pregnancy attempt | 96.3% blank, no structural reason |
+
+[`missing_types_cv.py`](missing_types_cv.py) encodes each type explicitly: 0 for
+not-applicable counts and for blank "no" flags, −1 for days of steps that did not happen,
+and an indicator for truly missing days. Every rule is row-wise or chosen from the training
+fold. It was compared on the same five folds with the baseline and with leaving every gap
+as NaN.
+
+| Comparison | Difference in OOF AUC | Folds up |
+|---|---:|---:|
+| Fix only the "no" → "yes" bug (median imputation otherwise) vs baseline | +0.00018 | 5/5 |
+| Leave every gap as NaN vs baseline | +0.00032 | 4/5 |
+| Type rules vs NaN, untuned LightGBM | +0.00002 | 2/5 |
+| Type rules vs NaN, tuned LightGBM | +0.00003 | 3/5 |
+| Type rules vs NaN, CatBoost | −0.00024 | 1/5 |
+| Type rules vs NaN, LightGBM–CatBoost blend | −0.00014 | 0/5 |
+
+- **The baseline's median bug cost a little.** Fixing it helped in every fold, but by only
+  0.0002, because the three columns are blank for 99% of rows.
+- **Telling the types apart added nothing beyond NaN.** When gaps stay as NaN, the model
+  learns inside each training fold where to send them, and the type is already visible in
+  other columns (transferred embryos = 0, frozen embryo used = 0, treatment type).
+- **The best result is the simplest input.** Gaps left as NaN, no hand-made ratios, and a
+  rank blend of tuned LightGBM and CatBoost: **OOF AUC 0.74052**, +0.0013 above the
+  baseline in every fold, and slightly above the 5-6 blend that included the ratios.
+
 ## 6. Repository Layout
 
 | Path | Contents |
@@ -313,7 +356,7 @@ small differences are descriptive. Details and the full protocol:
 | `notebooks/archive/` | Competition-time notebook |
 | `src/`, `main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py` | The notebook moved into modules after the competition, plus code that measured each cause. Some issues from 8-1 remain |
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | Leak-free workflow rebuilt after the review |
-| `improve_cv.py` | Step-by-step improvement experiment on the same folds (5-6) |
+| `improve_cv.py`, `missing_types_cv.py` | Improvement and missing-value-type experiments on the same folds (5-6, 5-7) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
@@ -337,6 +380,7 @@ The improvement experiment in 5-6 also needs CatBoost and Optuna:
 ```bash
 python -m pip install -r requirements-improve.txt
 python improve_cv.py                            # about 17 minutes on a 15-core laptop
+python missing_types_cv.py                      # about 45 minutes
 ```
 
 Tests run without the competition data:

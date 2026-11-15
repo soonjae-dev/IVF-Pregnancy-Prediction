@@ -64,6 +64,14 @@ JSON are descriptive, not confidence intervals or significance tests. The record
 Git commit is the one before `improve_cv.py` was committed (`dirty: true`); its
 `improve_cv_sha256` identifies the executed source.
 
+## Follow-up
+
+[MISSING_TYPES.md](MISSING_TYPES.md) reran the tuned LightGBM, CatBoost and blend steps
+without the ordinal and ratio features, with gaps left as NaN. That blend scored 0.74052,
++0.00019 above the blend here (higher in four of five folds), so the hand-made features did
+not help the stronger models either. Encoding each type of missing value explicitly did not
+beat NaN.
+
 ## Not yet tested
 
 - GAIN fitted inside each training fold, compared with these steps on the same folds.
