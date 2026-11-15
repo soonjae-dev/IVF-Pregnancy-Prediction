@@ -1,0 +1,96 @@
+{
+  "model_directory": "models/final_20261115T161344_326127Z",
+  "bundle_sha256": "7dfefc42891b7d4d6795dffb7db4f698adb09e09600187d40bfd877b33b2c29f",
+  "packages": {
+    "numpy": "1.26.4",
+    "pandas": "2.2.1",
+    "scikit-learn": "1.4.1.post1",
+    "lightgbm": "4.3.0",
+    "catboost": "1.2.5",
+    "optuna": "3.6.1",
+    "joblib": "1.6.0"
+  },
+  "combine": "mean of LightGBM and CatBoost probabilities",
+  "details": {
+    "lightgbm": {
+      "params": {
+        "num_leaves": 39,
+        "min_child_samples": 160,
+        "colsample_bytree": 0.9694816750962623,
+        "subsample": 0.8975883235113205,
+        "reg_lambda": 1.3465811455617611
+      },
+      "n_estimators": 338,
+      "inner_auc": 0.737510236427297,
+      "trials": 25,
+      "seconds": 144.63338112499332
+    },
+    "catboost": {
+      "iterations": 1011,
+      "inner_auc": 0.7370488266190888,
+      "seconds": 134.15793762498652
+    },
+    "train_rows": 256351,
+    "positive_rate": 0.2583489044318142
+  },
+  "save_load_check": {
+    "rows": 90067,
+    "max_abs_difference": 0.0,
+    "identical": true,
+    "test_probability": {
+      "min": 0.00036865892492424554,
+      "mean": 0.25855853595349937,
+      "max": 0.7513623384756126
+    },
+    "predictions_sha256": "7ed2801e6a57b81c53015589204d2a6a7390df4cf3268ff4849bf0dd7bdffc79"
+  },
+  "provenance": {
+    "recorded_at_utc": "2026-11-15T16:09:03.033019+00:00",
+    "dataset": {
+      "filename": "train.csv",
+      "sha256": "205c73f52ce2f157916b9b75b4cfededb634702f67c7f1cdc153b37c9f1492e2",
+      "bytes": 84117328
+    },
+    "environment": {
+      "python": "3.11.18",
+      "platform": "macOS-27.2.1-arm64-arm-64bit",
+      "packages": {
+        "numpy": "1.26.4",
+        "pandas": "2.2.1",
+        "scikit-learn": "1.4.1.post1",
+        "lightgbm": "4.3.0"
+      }
+    },
+    "code": {
+      "commit": "9d3eb515b40cebca62e4bac6e71e242c68122775",
+      "dirty": true,
+      "baseline_cv_sha256": "fb0d971a315d7f5a2e0811572efa8ff4d58e250bddb1a8b30b2a4b60943a0531",
+      "final_model_sha256": "45e66a380ca3df6a3d90670312b20bfb2fa0834a462db26b34e6bed9312f511a"
+    },
+    "configuration": {
+      "folds": null,
+      "sample": null,
+      "estimators": null,
+      "seed": 42
+    }
+  },
+  "settings": {
+    "trials": 25,
+    "sample": null,
+    "seed": 42,
+    "inner_split": 0.2
+  },
+  "test_dataset": {
+    "filename": "test.csv",
+    "sha256": "7781494a71ede773b021af9a4689ece05f02ff7797411a31c81cfd4d8edf5db2"
+  },
+  "test_input_report": {
+    "rows": 90067,
+    "ignored_columns": [
+      "ID"
+    ],
+    "unseen_categories": {
+      "특정 시술 유형": 3
+    }
+  }
+}

@@ -168,6 +168,15 @@ python seed_cv.py --seeds 42,1 --sample 5000 --trials 2   # quick check
 
 See [SEEDS.md](experiments/SEEDS.md).
 
+Train, save and use the final model (about 5 minutes):
+
+```bash
+python final_model.py train
+python final_model.py predict --model models/final_<time> --input data/test.csv
+```
+
+See [FINAL_MODEL.md](FINAL_MODEL.md).
+
 ## Repeat the controlled missingness comparison
 
 ```bash

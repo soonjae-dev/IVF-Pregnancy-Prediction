@@ -399,6 +399,25 @@ baseline (0.7392) and the best blend (0.7405) on the same rows
   A model trained only on pre-treatment columns was not measured. Without patient or clinic
   identifiers, generalization to new patients or clinics is not measured either.
 
+### 5-9. Saving the final model and predicting
+
+The best combination (tuned LightGBM + CatBoost) was retrained on all training rows,
+saved, and given a load-and-predict path for new data ([details](docs/FINAL_MODEL.md)).
+
+- **Training follows the experiments.** The inner tuning each fold used is applied to all
+  256,351 rows. A test checks that it gives the same predictions as the experiment code.
+- **The combination is a probability mean.** The experiments' rank mean changes with the
+  other rows being scored and cannot score a single row. On the saved out-of-fold
+  predictions the probability mean was within 0.00005 AUC of the rank mean, and its average
+  (0.258) equals the pregnancy rate.
+- **Inputs are checked.** A missing column or a non-numeric value in a numeric column
+  stops the prediction. Categories not seen in training are scored and counted.
+- **Save and load were verified.** The 90,067 test rows scored before saving and after
+  loading were identical. Loading checks the file hash and warns when package versions
+  differ.
+- The output estimates the chance of pregnancy given a cycle's full record; it is not a
+  pre-treatment prediction (5-8).
+
 ## 6. Repository Layout
 
 | Path | Contents |
@@ -409,6 +428,7 @@ baseline (0.7392) and the best blend (0.7405) on the same rows
 | `improve_cv.py`, `missing_types_cv.py` | Improvement and missing-value-type experiments on the same folds (5-6, 5-7) |
 | `error_analysis.py` | Subgroup comparison from the saved out-of-fold predictions (5-8) |
 | `seed_cv.py` | The four key models on five split seeds (5-7) |
+| `final_model.py` | Trains the best combination on all rows, saves it, loads it and predicts (5-9) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
@@ -435,6 +455,8 @@ python improve_cv.py                            # about 17 minutes on a 15-core 
 python missing_types_cv.py                      # about 45 minutes
 python error_analysis.py                        # subgroup analysis, about a minute
 python seed_cv.py                               # five split seeds, about 1h40
+python final_model.py train                     # train and save the final model, about 5 minutes
+python final_model.py predict --model models/final_<time> --input data/test.csv
 ```
 
 Tests run without the competition data:
