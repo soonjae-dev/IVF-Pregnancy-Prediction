@@ -1,0 +1,9 @@
+{
+  "n_estimators": 400,
+  "max_depth": 17,
+  "min_samples_split": 8,
+  "min_samples_leaf": 5,
+  "bootstrap": false,
+  "referee_auc": 0.7351690370984262,
+  "_note": "Historical parameters selected by tune.py on a 75% estimator-stage tuning split and adopted using the remaining 25% referee split. Shared-cache target-based feature selection and GAIN imputation preceded that split, so referee_auc is not an uncontaminated performance estimate. These parameters are not used by the current baseline; see docs/VALIDATION_AUDIT.md."
+}

@@ -1,0 +1,98 @@
+{
+  "rows": 256351,
+  "features": 67,
+  "folds": 5,
+  "seed": 42,
+  "model": "LightGBM",
+  "preprocessing": "Fold-fitted SimpleImputer + OneHotEncoder",
+  "oof_roc_auc": 0.7392190176246645,
+  "oof_average_precision": 0.44869181682272186,
+  "oof_f1_at_0.5": 0.171027359798522,
+  "fold_results": [
+    {
+      "fold": 1,
+      "roc_auc": 0.7370015415567628,
+      "average_precision": 0.4489999979451903,
+      "f1_at_0.5": 0.17288976528210673
+    },
+    {
+      "fold": 2,
+      "roc_auc": 0.7419594041292795,
+      "average_precision": 0.45107484853145413,
+      "f1_at_0.5": 0.17094779782012876
+    },
+    {
+      "fold": 3,
+      "roc_auc": 0.7392326649258438,
+      "average_precision": 0.44935120229708786,
+      "f1_at_0.5": 0.16756272401433692
+    },
+    {
+      "fold": 4,
+      "roc_auc": 0.7377994629948189,
+      "average_precision": 0.4449876293609603,
+      "f1_at_0.5": 0.17742848160955674
+    },
+    {
+      "fold": 5,
+      "roc_auc": 0.7401952584822974,
+      "average_precision": 0.4502539483961807,
+      "f1_at_0.5": 0.16619897959183674
+    }
+  ],
+  "model_parameters": {
+    "boosting_type": "gbdt",
+    "class_weight": null,
+    "colsample_bytree": 1.0,
+    "importance_type": "split",
+    "learning_rate": 0.05,
+    "max_depth": -1,
+    "min_child_samples": 20,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 250,
+    "n_jobs": -1,
+    "num_leaves": 31,
+    "objective": null,
+    "random_state": 42,
+    "reg_alpha": 0.0,
+    "reg_lambda": 0.0,
+    "subsample": 1.0,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0,
+    "verbosity": -1
+  },
+  "provenance": {
+    "recorded_at_utc": "2026-11-10T14:42:57.626887+00:00",
+    "dataset": {
+      "filename": "train.csv",
+      "sha256": "205c73f52ce2f157916b9b75b4cfededb634702f67c7f1cdc153b37c9f1492e2",
+      "bytes": 84117328
+    },
+    "environment": {
+      "python": "3.11.18",
+      "platform": "macOS-26.7.2-arm64-arm-64bit",
+      "packages": {
+        "numpy": "1.26.4",
+        "pandas": "2.2.1",
+        "scikit-learn": "1.4.1.post1",
+        "lightgbm": "4.3.0"
+      }
+    },
+    "code": {
+      "commit": "e8facebe924b7a0d11f68d4fb47c30ef8e1d32fa",
+      "dirty": true,
+      "baseline_cv_sha256": "86c9dbf4baf9af873f79ceb791ec8e04deef32414bc74b4a68402d3d9a90ee69"
+    },
+    "configuration": {
+      "folds": 5,
+      "sample": null,
+      "estimators": 250,
+      "seed": 42
+    }
+  },
+  "oof_artifact": {
+    "filename": "predictions_oof.csv",
+    "sha256": "38c1a793833d9a7f36e0c499f9d367aedc55553b79813de7080e54259b1cbf23"
+  }
+}

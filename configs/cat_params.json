@@ -1,0 +1,10 @@
+{
+  "iterations": 600,
+  "depth": 5,
+  "learning_rate": 0.03300611744028219,
+  "l2_leaf_reg": 0.06217903870484771,
+  "random_strength": 0.07151919601603257,
+  "bagging_temperature": 4.239993974287455,
+  "referee_auc": 0.7405627133034283,
+  "_note": "Historical parameters selected by tune.py on a 75% estimator-stage tuning split and adopted using the remaining 25% referee split. Shared-cache target-based feature selection and GAIN imputation preceded that split, so referee_auc is not an uncontaminated performance estimate. These parameters are not used by the current baseline; see docs/VALIDATION_AUDIT.md."
+}

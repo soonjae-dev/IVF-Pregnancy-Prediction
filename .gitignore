@@ -1,0 +1,47 @@
+# Data & Model weights
+data/
+models/
+*.csv
+*.pt
+*.cbm
+
+# Python environments & caches
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.env
+
+# GAIN imputation cache
+data/gain_cache.npz
+
+# CatBoost training artefacts
+catboost_info/
+
+# Logs
+logs/
+*.log
+
+# Per-variant caches built by column_study.py
+data/column_cache/
+
+# Optuna study database and interim leaders. The referee comparison is kept,
+# because it is the evidence for whatever ends up in configs/.
+tuning/*
+!tuning/referee.json
+.venv/
+
+# Subsampled evaluate_cv runs
+cv_results_sample*.json
+
+# macOS finder droppings
+.DS_Store
+
+# OOF predictions for local evaluation
+results/*_oof.csv
+
+# Local application material and original notebook outputs
+docs/private/
+
+# Original competition working folder (local only, ~5 GB)
+competition_archive/

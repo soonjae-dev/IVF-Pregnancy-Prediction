@@ -1,0 +1,15 @@
+{
+  "archived_on": "2026-11-11",
+  "record": "../comparison.json",
+  "note": "Source copies added after the run. Hashes match the original report; original provenance and metrics were not rewritten.",
+  "files": {
+    "baseline_cv.py": {
+      "sha256": "2b155b75f2b98c994beabb4970601373d33d0398043860264ca177bf6032c6ff",
+      "provenance_key": "provenance.code.baseline_cv_sha256"
+    },
+    "compare_missingness.py": {
+      "sha256": "51e11334d036db1c01a8095bb36b2e7bc2840051147955269526cfa0e9461fc2",
+      "provenance_key": "provenance.code.comparison_script_sha256"
+    }
+  }
+}

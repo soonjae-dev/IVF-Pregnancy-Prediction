@@ -1,0 +1,31 @@
+{
+  "rows": 5000,
+  "features": 67,
+  "folds": 3,
+  "seed": 42,
+  "model": "LightGBM",
+  "preprocessing": "Fold-fitted SimpleImputer + OneHotEncoder",
+  "oof_roc_auc": 0.6930962173661833,
+  "oof_average_precision": 0.39718250921345255,
+  "oof_f1_at_0.5": 0.294997421351212,
+  "fold_results": [
+    {
+      "fold": 1,
+      "roc_auc": 0.7055579333078038,
+      "average_precision": 0.41892720041229226,
+      "f1_at_0.5": 0.33384853168469864
+    },
+    {
+      "fold": 2,
+      "roc_auc": 0.6975367738156917,
+      "average_precision": 0.4003737517045323,
+      "f1_at_0.5": 0.28527131782945736
+    },
+    {
+      "fold": 3,
+      "roc_auc": 0.6763603522239783,
+      "average_precision": 0.38158740191428575,
+      "f1_at_0.5": 0.26584234930448225
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Synthetic-data tests, including archived GAIN loss regression tests.
+-r requirements-baseline.txt
+torch==2.2.1

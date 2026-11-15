@@ -1,0 +1,43 @@
+{
+  "rows": 256351,
+  "features": 67,
+  "folds": 5,
+  "seed": 42,
+  "model": "LightGBM",
+  "preprocessing": "Fold-fitted SimpleImputer + OneHotEncoder",
+  "oof_roc_auc": 0.7392190176246645,
+  "oof_average_precision": 0.44869181682272186,
+  "oof_f1_at_0.5": 0.171027359798522,
+  "fold_results": [
+    {
+      "fold": 1,
+      "roc_auc": 0.7370015415567628,
+      "average_precision": 0.4489999979451903,
+      "f1_at_0.5": 0.17288976528210673
+    },
+    {
+      "fold": 2,
+      "roc_auc": 0.7419594041292795,
+      "average_precision": 0.45107484853145413,
+      "f1_at_0.5": 0.17094779782012876
+    },
+    {
+      "fold": 3,
+      "roc_auc": 0.7392326649258438,
+      "average_precision": 0.44935120229708786,
+      "f1_at_0.5": 0.16756272401433692
+    },
+    {
+      "fold": 4,
+      "roc_auc": 0.7377994629948189,
+      "average_precision": 0.4449876293609603,
+      "f1_at_0.5": 0.17742848160955674
+    },
+    {
+      "fold": 5,
+      "roc_auc": 0.7401952584822974,
+      "average_precision": 0.4502539483961807,
+      "f1_at_0.5": 0.16619897959183674
+    }
+  ]
+}
