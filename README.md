@@ -8,7 +8,7 @@
 >
 > - **Diagnosis**: My competition result was in the lower half (Private 544/794, AUC 0.714). Re-running the pipeline after the competition showed that applying SMOTE before cross-validation inflated validation AUC by about 0.18, and that GAIN imputation and feature selection had also seen the validation rows ([5-2](#5-2-the-089-tuning-score-was-smote-leakage), [8](#8-retrospective)).
 > - **Rebuild**: A baseline that learns only inside each fold, records data and source hashes, and reproduces its predictions byte for byte (cross-validation AUC 0.7392, [5-4](#5-4-a-leak-free-baseline)).
-> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003 (GAIN fitted inside each fold has not been compared yet), and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405 ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
+> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003 (GAIN fitted inside each fold has not been compared yet), and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405, and the gain held on five split seeds (mean +0.00125, positive in all 25 folds) ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
 > - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here. The inputs include columns known only after treatment has progressed (such as the number of embryos transferred), so this is not the accuracy of a pre-treatment prediction; among rows with an embryo transferred, AUC is about 0.68 ([5-8](#5-8-where-the-model-is-right-and-where-it-fails)).
 
 ## 1. Project Overview
@@ -358,7 +358,12 @@ as NaN.
   baseline in every fold, and slightly above the 5-6 blend that included the ratios.
 
 **How to read 0.7405.** It is the best of several variants compared on the same five
-folds with one seed, so it is slightly optimistic. It is cross-validation AUC on the
+folds with one seed, so it is slightly optimistic. Re-running the baseline, tuned
+LightGBM, CatBoost and the blend on five split seeds (42, 1, 2, 3, 4) gives the blend a
+mean AUC of 0.74033 (0.74018–0.74052), with seed 42 the highest. Its gain over the
+baseline was +0.0011 to +0.0013 on every seed (mean +0.00125) and positive in all 25
+folds ([details](docs/experiments/SEEDS.md)). The seeds re-split the same rows, so they
+are not independent samples, and model and tuning randomness was held at seed 42. It is cross-validation AUC on the
 training data, and submissions closed with the competition, so it cannot be placed on the
 leaderboard; leaderboard scores near the top are only thousandths apart, and a
 cross-validation score cannot say which side of those gaps a model would land on. What
@@ -403,6 +408,7 @@ baseline (0.7392) and the best blend (0.7405) on the same rows
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | Leak-free workflow rebuilt after the review |
 | `improve_cv.py`, `missing_types_cv.py` | Improvement and missing-value-type experiments on the same folds (5-6, 5-7) |
 | `error_analysis.py` | Subgroup comparison from the saved out-of-fold predictions (5-8) |
+| `seed_cv.py` | The four key models on five split seeds (5-7) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
@@ -428,6 +434,7 @@ python -m pip install -r requirements-improve.txt
 python improve_cv.py                            # about 17 minutes on a 15-core laptop
 python missing_types_cv.py                      # about 45 minutes
 python error_analysis.py                        # subgroup analysis, about a minute
+python seed_cv.py                               # five split seeds, about 1h40
 ```
 
 Tests run without the competition data:

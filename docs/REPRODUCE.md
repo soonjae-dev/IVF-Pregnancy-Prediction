@@ -159,6 +159,15 @@ python error_analysis.py
 
 See [ERROR_ANALYSIS.md](experiments/ERROR_ANALYSIS.md).
 
+The four key models on five split seeds (about 1h40 on a 15-core laptop):
+
+```bash
+python seed_cv.py
+python seed_cv.py --seeds 42,1 --sample 5000 --trials 2   # quick check
+```
+
+See [SEEDS.md](experiments/SEEDS.md).
+
 ## Repeat the controlled missingness comparison
 
 ```bash
