@@ -9,7 +9,7 @@
 > - **Diagnosis**: My competition result was in the lower half (Private 544/794, AUC 0.714). Re-running the pipeline after the competition showed that applying SMOTE before cross-validation inflated validation AUC by about 0.18, and that GAIN imputation and feature selection had also seen the validation rows ([5-2](#5-2-the-089-tuning-score-was-smote-leakage), [8](#8-retrospective)).
 > - **Rebuild**: A baseline that learns only inside each fold, records data and source hashes, and reproduces its predictions byte for byte (cross-validation AUC 0.7392, [5-4](#5-4-a-leak-free-baseline)).
 > - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003 (GAIN fitted inside each fold has not been compared yet), and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405 ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
-> - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here.
+> - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here. The inputs include columns known only after treatment has progressed (such as the number of embryos transferred), so this is not the accuracy of a pre-treatment prediction; among rows with an embryo transferred, AUC is about 0.68 ([5-8](#5-8-where-the-model-is-right-and-where-it-fails)).
 
 ## 1. Project Overview
 
@@ -365,6 +365,35 @@ cross-validation score cannot say which side of those gaps a model would land on
 these experiments support is the direction (which changes help, consistently across
 folds), not a rank.
 
+### 5-8. Where the model is right and where it fails
+
+One overall AUC does not say which patients gained and where the model is weak. Without
+retraining, the out-of-fold predictions saved in 5-7 were split by subgroup to compare the
+baseline (0.7392) and the best blend (0.7405) on the same rows
+([full tables and scope](docs/experiments/ERROR_ANALYSIS.md)).
+
+| Rows | Count | Positive rate | AUC baseline → blend | Difference (95% interval) |
+|---|---:|---:|---|---|
+| All | 256,351 | 25.8% | 0.7392 → 0.7405 | +0.0013 (+0.0010 to +0.0017) |
+| Embryo transferred, or DI | 219,807 | 30.1% | 0.6776 → 0.6792 | +0.0016 (+0.0012 to +0.0020) |
+
+- **Much of the 0.74 comes from rows with no embryo transferred.** Of 36,544 IVF rows with
+  zero embryos transferred, 30 (0.08%) are pregnancies, so the model gets these rows almost
+  for free. Without them, both models rank at about 0.68. The improvement does not shrink
+  when they are removed.
+- **The blend gains a little in almost every group and does not clearly lose in any.** The
+  gain is larger where the baseline is weaker: DI +0.0065, frozen-embryo cycles +0.0046,
+  age 40–42 +0.0031. For age 45–50, donor eggs and 3 or more embryos transferred, the
+  interval includes 0.
+- **Hard for both models**: frozen-embryo cycles (AUC 0.65), two embryos transferred
+  (0.65), donor eggs (0.68), DI (0.68–0.69).
+- **When the inputs become known.** Some inputs, such as the number of embryos transferred
+  and the transfer day, are known only well into the treatment, and the number transferred
+  on its own ranks better than age (AUC 0.615 vs 0.596). So 0.74 is the score of a model
+  that sees a cycle's full record, not the accuracy of a prediction made before treatment.
+  A model trained only on pre-treatment columns was not measured. Without patient or clinic
+  identifiers, generalization to new patients or clinics is not measured either.
+
 ## 6. Repository Layout
 
 | Path | Contents |
@@ -373,6 +402,7 @@ folds), not a rank.
 | `src/`, `main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py` | The notebook moved into modules after the competition, plus code that measured each cause. Some issues from 8-1 remain |
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | Leak-free workflow rebuilt after the review |
 | `improve_cv.py`, `missing_types_cv.py` | Improvement and missing-value-type experiments on the same folds (5-6, 5-7) |
+| `error_analysis.py` | Subgroup comparison from the saved out-of-fold predictions (5-8) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
@@ -397,6 +427,7 @@ The improvement experiment in 5-6 also needs CatBoost and Optuna:
 python -m pip install -r requirements-improve.txt
 python improve_cv.py                            # about 17 minutes on a 15-core laptop
 python missing_types_cv.py                      # about 45 minutes
+python error_analysis.py                        # subgroup analysis, about a minute
 ```
 
 Tests run without the competition data:
@@ -497,9 +528,12 @@ Putting 8-1 to 8-3 together with this comparison, these are the points to improv
 ### 8-5. Open questions
 
 - **How would the best post-competition model score on the hidden test set?** Submissions
-  are closed, so this cannot be measured. A partial check without labels is possible:
-  if a classifier cannot tell training rows from test rows, the two come from a similar
-  distribution and cross-validation is more likely to carry over.
+  are closed, so this cannot be measured, and checks without labels are limited. A
+  classifier trained to tell training rows from test rows can reveal distribution
+  differences that are detectable in the observed inputs. Chance-level separation does not
+  show that the two distributions are the same or that test performance would hold: the
+  classifier can miss differences, and a change in the relation between inputs and target,
+  like the actual test score, cannot be checked this way.
 - **How much did the train/test processing mismatch cost on the leaderboard?** ([8-2](#8-2-training-and-test-data-were-processed-differently))
   This can be estimated without the leaderboard. Hold out part of the training data and
   score it twice with the same model: once filled by GAIN with the target, as the

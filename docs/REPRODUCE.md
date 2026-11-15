@@ -149,6 +149,16 @@ accepts a subset in any order and always runs it in ladder order; `blend` requir
 `lgb_tuned` and `catboost`. See [IMPROVEMENT.md](experiments/IMPROVEMENT.md) and
 [MISSING_TYPES.md](experiments/MISSING_TYPES.md).
 
+The subgroup analysis needs no training. It reads the OOF files of the latest
+`missing_types_cv.py` run and refuses to run if their hashes or the training data differ
+from what that run recorded:
+
+```bash
+python error_analysis.py
+```
+
+See [ERROR_ANALYSIS.md](experiments/ERROR_ANALYSIS.md).
+
 ## Repeat the controlled missingness comparison
 
 ```bash
