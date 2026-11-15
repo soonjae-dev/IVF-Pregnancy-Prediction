@@ -131,3 +131,23 @@ For controlled comparisons use identical data, folds and model settings, and
 report paired differences. Do not substitute a legacy cache-based result for
 this reference. The [missingness experiment](experiments/MISSINGNESS.md) is a
 single-seed component comparison, with limitations stated alongside its results.
+
+## Commit hashes in older records
+
+On 2026-11-16 the commit messages were rewritten to remove a trailer line. File
+contents did not change, but every commit hash did. Run records and review documents
+written before that date name the old hashes, which no longer exist in this repository.
+The same commit under its current hash:
+
+| Old hash | Current hash | Named in |
+|---|---|---|
+| `0b65822` | `44678d0` | [improvement ladder record](../results/improve_20261115T064857_957864Z/comparison.json) |
+| `67c43ab` | `5218cfd` | [missing-value types record](../results/missing_types_20261115T072026_459803Z/comparison.json) |
+| `110322c` | `277e32a` | [first review](PROJECT_REVIEW_20261115.ko.md) |
+| `38bf05c` | `60167e4` | [recheck](PROJECT_RECHECK_20261115.ko.md) |
+| `f16d78f` | `5afbbf0` | [improvement plan](PROJECT_IMPROVEMENT_PLAN_20261115.ko.md) |
+| `82a24bf` | `91fcffb` | [split-seed record](../results/seeds_20261115T142328_492960Z/comparison.json) |
+| `9d3eb51` | `e543291` | [final model record](../results/final_model_20261115T161344_326127Z.json) |
+
+The records themselves are left as they were written. Their source-file SHA-256 hashes
+are unaffected and still match the files in the current history.
