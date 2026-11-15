@@ -7,6 +7,7 @@
 > **Summary**: My competition result was in the lower half (Private 544/794, AUC 0.714).
 > A post-competition analysis confirmed validation leakage: the leaky evaluation reported a cross-validation AUC about 0.18 higher than evaluation on original validation rows.
 > I then rebuilt a reproducible baseline that learns only inside each fold (cross-validation AUC 0.739).
+> On the same folds, changing the missing-value handling moved AUC by at most 0.0003; nested tuning and a LightGBM–CatBoost rank blend raised it to 0.740.
 
 ## 1. Project Overview
 
@@ -197,8 +198,9 @@ but their pattern is clearly different from the other groups.
 - Do not drop categorical columns, such as egg source, that explain the effect of other
   features.
 
-Only part of the effect of these choices on the score has been checked, in
-[5-5](#5-5-missing-value-indicator-experiment).
+The effect of these choices on the score is checked in
+[5-5](#5-5-missing-value-indicator-experiment) and
+[5-6](#5-6-what-actually-raised-the-score).
 
 ### 5-4. A leak-free baseline
 
@@ -206,6 +208,28 @@ Before adding anything complex, I first secured a score I could trust.
 [`baseline_cv.py`](baseline_cv.py) starts from the raw CSV and, in every training fold,
 fits a median imputer, a one-hot encoder and LightGBM from scratch. It uses every string
 column and does no resampling, no label-based feature selection and no tuning.
+
+**How the baseline handles missing values.** Of the 31 input columns with gaps, 29 are
+numeric and 2 are strings (specific treatment type, main reason for embryo creation).
+
+| Step | Numeric columns (47) | String columns (20) |
+|---|---|---|
+| Before the split (stateless, row by row) | `inf` is turned into a missing value | A missing value becomes the literal category `__MISSING__` |
+| Fitted on the training fold | `SimpleImputer(strategy="median")`: each column's median over the training fold only | `OneHotEncoder`: the category list comes from the training fold only |
+| Applied to the validation fold | Gaps filled with the training-fold median | `__MISSING__` is its own indicator column; unseen categories become all zeros |
+
+- Nothing that looks at the label touches missing values, and no value from the
+  validation fold reaches the median or the category list. This is what replaces
+  the competition-time GAIN, which was fitted on all rows (and the target) before the
+  split.
+- No missingness indicator is added for numeric columns, so after imputation the model
+  cannot tell a filled median from a real one. The experiment in
+  [5-5](#5-5-missing-value-indicator-experiment) adds those indicators.
+- The "not applicable" gaps of DI rows are also filled with medians. The model can
+  still separate DI rows through the treatment-type column.
+- The ten count columns (for example total treatments, stored as `0회` … `6회 이상`)
+  are strings in the raw file, so the baseline one-hot encodes them as categories rather
+  than numbers.
 
 | Rows | Features | Validation | OOF ROC-AUC | Average precision |
 |---:|---:|---|---:|---:|
@@ -247,8 +271,40 @@ egg columns from [5-3](#5-3-post-competition-eda-and-what-the-missing-values-mea
 medians. The treatment-type column is still an input, so the model can tell DI rows apart.
 One possible explanation for the nearly unchanged score is that the missingness
 information was already carried by other columns; this experiment alone cannot establish
-the cause. Encoding DI gaps as 0 or a separate value has not yet been compared on the same
-folds.
+the cause. Setting DI gaps to 0 is compared on the same folds in
+[5-6](#5-6-what-actually-raised-the-score).
+
+### 5-6. What actually raised the score
+
+Fixing the leak made the score trustworthy, but not higher. To see whether the
+remaining gap was about missing values, I added one change at a time to the baseline
+([`improve_cv.py`](improve_cv.py)) on the same five folds. Everything that learns from
+data (imputation, column choice, hyperparameter search, early stopping) is fitted inside
+each training fold; tuning uses an inner split of the training fold.
+
+| Step (cumulative) | OOF ROC-AUC | vs previous | Folds up |
+|---|---:|---:|---:|
+| Baseline (median imputation) | 0.73922 | | |
+| Leave numeric gaps as NaN for LightGBM | 0.73953 | +0.00032 | 4/5 |
+| DI "not applicable" gaps as 0 | 0.73952 | −0.00002 | 2/5 |
+| Count and age strings as ordered numbers | 0.73935 | −0.00017 | 1/5 |
+| Eleven domain ratios (embryos per egg and others) | 0.73900 | −0.00035 | 0/5 |
+| Nested Optuna tuning of LightGBM | 0.74002 | +0.00102 | 5/5 |
+| CatBoost with native categories (same features) | 0.73981 | −0.00021 | 1/5 |
+| Rank average of tuned LightGBM and CatBoost | **0.74034** | +0.00053 | 5/5 |
+
+- **Missing-value handling was not the lever.** The best missing-value change moved AUC
+  by +0.0003; setting DI gaps to 0 added nothing once the model saw NaN and the treatment
+  type. GAIN hurt the competition pipeline because it was fitted before the split and
+  with the target, not because a better imputer was waiting to be found.
+- **Tuning and combining two different models helped**, by +0.0010 and +0.0005, in every
+  fold. The final score is +0.0011 above the baseline.
+- **The domain ratios I built did not help.** Tree models already combine the raw counts.
+
+0.7403 is cross-validation AUC on the training data, not a leaderboard score, so it
+cannot be compared with the 1st-place public score of 0.74350. One seed was used, so the
+small differences are descriptive. Details and the full protocol:
+[docs/experiments/IMPROVEMENT.md](docs/experiments/IMPROVEMENT.md).
 
 ## 6. Repository Layout
 
@@ -257,6 +313,7 @@ folds.
 | `notebooks/archive/` | Competition-time notebook |
 | `src/`, `main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py` | The notebook moved into modules after the competition, plus code that measured each cause. Some issues from 8-1 remain |
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | Leak-free workflow rebuilt after the review |
+| `improve_cv.py` | Step-by-step improvement experiment on the same folds (5-6) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
@@ -273,6 +330,13 @@ python -m pip install -r requirements-baseline.txt
 python baseline_cv.py --sample 5000 --folds 3   # quick check
 python baseline_cv.py --folds 5                 # full cross-validation
 python predict_test.py                          # write a submission file
+```
+
+The improvement experiment in 5-6 also needs CatBoost and Optuna:
+
+```bash
+python -m pip install -r requirements-improve.txt
+python improve_cv.py                            # about 17 minutes on a 15-core laptop
 ```
 
 Tests run without the competition data:

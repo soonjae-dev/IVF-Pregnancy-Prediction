@@ -18,8 +18,8 @@ data/
 └── test.csv
 ```
 
-Cross-validation (`baseline_cv.py`, `compare_missingness.py`) needs only
-`train.csv`. `predict_test.py` additionally reads `test.csv` to write a
+Cross-validation (`baseline_cv.py`, `compare_missingness.py`, `improve_cv.py`)
+needs only `train.csv`. `predict_test.py` additionally reads `test.csv` to write a
 submission file. None of these needs a GAIN cache or saved OOF predictions.
 To use another training-file location:
 

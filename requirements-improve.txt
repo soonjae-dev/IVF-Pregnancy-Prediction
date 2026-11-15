@@ -1,0 +1,4 @@
+# improve_cv.py: baseline requirements plus CatBoost and Optuna (Python 3.11).
+-r requirements-baseline.txt
+catboost==1.2.5
+optuna==3.6.1
