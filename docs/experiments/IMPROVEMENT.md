@@ -62,7 +62,8 @@ confirms that every step used the same folds. `catboost` is compared with
 One seed and five folds that share training rows: the fold standard deviations in the
 JSON are descriptive, not confidence intervals or significance tests. The recorded run's
 Git commit is the one before `improve_cv.py` was committed (`dirty: true`); its
-`improve_cv_sha256` identifies the executed source.
+`improve_cv_sha256` identifies the executed source, and a copy of that file is kept with
+a hash manifest in the run's `source/` folder.
 
 ## Follow-up
 

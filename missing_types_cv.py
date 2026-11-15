@@ -6,11 +6,12 @@ The raw training file has five kinds of gaps (docs/experiments/MISSING_TYPES.md)
     2. step not performed  an elapsed-day column is empty because the step it
                            times did not happen (no transfer, no frozen embryo, ...)
     3. truly missing       the step happened but its day was not recorded
-    4. "no" left blank     yes/no columns whose only recorded value is 1
+    4. blank flag          yes/no columns whose only recorded value is 1;
+                           a blank is assumed to mean "no" (not confirmed)
     5. unknown             no structural reason (years since last pregnancy)
 
 The baseline fills every numeric gap with the training-fold median, which turns
-type 4 into "yes" and mixes types 2 and 3. This script encodes each type
+every type 4 blank into 1 and mixes types 2 and 3. This script encodes each type
 explicitly and compares the result with the baseline and with leaving gaps as
 NaN, all on the same five folds. Rules are either row-wise (no fitting) or fitted
 on the training part of each fold; no label is used.
@@ -91,7 +92,7 @@ def fit_typed(X_train):
             X[column + "_truly_missing"] = (gap & ~not_applicable).astype(float)
             # Types 1 and 2: a day that cannot exist gets its own value.
             X.loc[gap & not_applicable, column] = NOT_APPLICABLE
-        for column in flags:                       # type 4: blank means "no"
+        for column in flags:                       # type 4: blank assumed to mean "no"
             X[column] = X[column].fillna(0.0)
         others = [c for c in di_columns if c not in days and c not in flags]
         X.loc[di, others] = X.loc[di, others].fillna(0.0)   # type 1: counts are 0

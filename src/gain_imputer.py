@@ -227,7 +227,11 @@ def gain_impute(
     Z_full = torch.rand_like(X_tensor)
     one_minus_M = 1.0 - M_tensor
     X_input = M_tensor * X_tensor + one_minus_M * Z_full
-    
+
+    # Inference mode: no dropout, and BatchNorm uses the running statistics it
+    # learned during training rather than the statistics of this one pass.
+    # Caches built before 2026-11-15 ran this pass in training mode.
+    G.eval()
     with torch.no_grad():
         G_output = G(X_input)
         

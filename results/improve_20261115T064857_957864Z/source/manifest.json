@@ -1,0 +1,11 @@
+{
+  "archived_on": "2026-11-15",
+  "record": "../comparison.json",
+  "note": "Source copies added after the run. Hashes match the original report; original provenance and metrics were not rewritten.",
+  "files": {
+    "improve_cv.py": {
+      "sha256": "7c4df3d1f5cbbf627cf57c965020b3219b14c8a04eb4cbc6e03580ab4c8703b8",
+      "provenance_key": "provenance.code.improve_cv_sha256"
+    }
+  }
+}

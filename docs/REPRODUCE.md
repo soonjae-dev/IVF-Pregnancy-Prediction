@@ -32,7 +32,9 @@ The [GitHub Actions workflow](../.github/workflows/tests.yml) installs
 and runs this suite on every push and pull request.
 
 The full `requirements.txt` is optional for the legacy training, tuning and study
-scripts. Those scripts have validation limitations and are outside this supported
+scripts. Install it in a separate virtual environment rather than on top of the baseline
+environment: it adds XGBoost, imbalanced-learn, skorch and a pinned PyTorch, and without
+them `main.py`, `evaluate_cv.py` and the `*_study.py` scripts fail at import. Those scripts have validation limitations and are outside this supported
 baseline workflow. Installing their dependencies does not correct their design.
 See the [archived notebook guide](archive/NOTEBOOK.md) for the historical notebook.
 
@@ -120,6 +122,19 @@ file. It creates `results/submission_<UTC timestamp>/` with `submission.csv`
 (`ID`, `probability`, in test-file order) and `summary.json` (data, test and
 source hashes). The CSV stays local. Options: `--data`, `--test`,
 `--estimators`, `--output-dir`.
+
+## Improvement and missing-value-type experiments
+
+```bash
+python -m pip install -r requirements-improve.txt
+python improve_cv.py
+python missing_types_cv.py
+```
+
+Both reuse the baseline's folds and record source hashes. `improve_cv.py --variants`
+accepts a subset in any order and always runs it in ladder order; `blend` requires
+`lgb_tuned` and `catboost`. See [IMPROVEMENT.md](experiments/IMPROVEMENT.md) and
+[MISSING_TYPES.md](experiments/MISSING_TYPES.md).
 
 ## Repeat the controlled missingness comparison
 

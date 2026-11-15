@@ -30,6 +30,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import pathlib
 import subprocess
@@ -49,20 +50,64 @@ def log(message):
 
 # Keys every cache carries. A cache written before X_test was added is missing
 # some of these, so it is rebuilt rather than half-read.
-REQUIRED_KEYS = {"X", "y", "columns", "X_test", "test_ids"}
+REQUIRED_KEYS = {"X", "y", "columns", "X_test", "test_ids", "spec"}
+ROOT = pathlib.Path(__file__).resolve().parent
+CONFIG = pathlib.Path("configs/config.json")
+# Every source file whose behaviour shapes the cached matrix.
+SOURCES = ["build_cache.py", "src/preprocessing.py", "src/features.py",
+           "src/feature_selection.py", "src/encoding.py", "src/run_imputation.py",
+           "src/gain_imputer.py"]
 
 
-def _is_complete(path):
+def _sha256(path):
+    digest = hashlib.sha256()
+    with pathlib.Path(path).open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def cache_spec(encode=None, iterations=None, config_path=CONFIG):
+    """
+    Everything that determines the cached matrix: input data, the code that
+    transforms it, and the build options. A cache is reused only when its stored
+    spec equals the spec of the request.
+    """
+    config = json.loads(pathlib.Path(config_path).read_text(encoding="utf-8"))
+    pipeline = config["pipeline"]
+    return {
+        "train_sha256": _sha256(pipeline["train_data_path"]),
+        "test_sha256": _sha256(pipeline["test_data_path"]),
+        "config_sha256": _sha256(config_path),
+        "sources": {name: _sha256(ROOT / name) for name in SOURCES},
+        "encode": list(encode) if encode else "default",
+        "iterations": int(iterations or config["imputation"]["gain_iterations"]),
+        "seed": SEED,
+    }
+
+
+def stored_spec(path):
+    """The spec a cache was built with, or None if it is unreadable or incomplete."""
     try:
         with np.load(path, allow_pickle=True) as cached:
-            return REQUIRED_KEYS.issubset(set(cached.files))
+            if not REQUIRED_KEYS.issubset(set(cached.files)):
+                return None
+            return json.loads(str(cached["spec"]))
     except Exception:
-        return False
+        return None
+
+
+def _set_aside(path):
+    """Keep a stale cache under a new name instead of deleting it."""
+    stale = path.with_name(f"{path.stem}.stale-{time.strftime('%Y%m%dT%H%M%S')}{path.suffix}")
+    path.rename(stale)
+    return stale
 
 
 def ensure_cache(out=DEFAULT_CACHE, encode=None, iterations=None, quiet=False):
     """
-    Return the cache path, building it in a separate process if it is missing.
+    Return the cache path, building it in a separate process if it is missing
+    or was built from different data, code or options.
 
     Callers get one command for the user and an isolated interpreter for torch.
     Raises CalledProcessError if the build fails, so a crash is not mistaken for
@@ -70,13 +115,16 @@ def ensure_cache(out=DEFAULT_CACHE, encode=None, iterations=None, quiet=False):
     """
     out = pathlib.Path(out)
     if out.exists():
-        if _is_complete(out):
+        wanted = cache_spec(encode, iterations)
+        found = stored_spec(out)
+        if found == wanted:
             if not quiet:
                 log(f"using cached matrix {out}")
             return out
+        stale = _set_aside(out)
         if not quiet:
-            log(f"{out} predates the test matrix — rebuilding")
-        out.unlink()
+            reason = "has no build record" if found is None else "was built differently"
+            log(f"{out} {reason}; kept as {stale.name} and rebuilding")
 
     command = [sys.executable, str(pathlib.Path(__file__).resolve()), "--out", str(out)]
     for column in encode or []:
@@ -107,8 +155,10 @@ def build(out, encode, iterations, force):
     from src.preprocessing import run_basic_preprocessing
     from src.run_imputation import run_gain_on_dataframes
 
-    config = json.load(open("configs/config.json"))
+    config = json.load(open(CONFIG))
     iterations = iterations or config["imputation"]["gain_iterations"]
+    # Recorded before any work, so the stored spec describes the inputs used.
+    spec = cache_spec(encode, iterations)
     set_seed(SEED)
     device = get_device()
 
@@ -140,11 +190,14 @@ def build(out, encode, iterations, force):
         raise RuntimeError("train and test columns diverged after imputation")
     X_test = test_df.values.astype(np.float32)
 
+    if cache_spec(encode, iterations) != spec:
+        raise RuntimeError("input data or source changed during the build; nothing saved")
     out.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         out, X=X, y=y, X_test=X_test,
         columns=np.array(features.columns, dtype=object),
-        test_ids=np.array([] if test_ids is None else test_ids.values, dtype=object))
+        test_ids=np.array([] if test_ids is None else test_ids.values, dtype=object),
+        spec=np.array(json.dumps(spec, sort_keys=True)))
     log(f"cached {X.shape[0]:,} train and {X_test.shape[0]:,} test rows "
         f"x {X.shape[1]} features to {out}")
 

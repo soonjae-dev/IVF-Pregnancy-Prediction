@@ -11,7 +11,7 @@ All counts are from the raw training file (256,351 rows; 6,291 DI and 250,060 IV
 | 1. DI not applicable | DI creates no embryos, so embryo and egg fields cannot exist | 20 numeric columns plus `배아 생성 주요 이유`, empty for every DI row and never empty for IVF rows; `난자 출처 = 알 수 없음` on exactly the 6,291 DI rows | 100% vs 0% missing by treatment type |
 | 2. Step not performed | An elapsed-day column times a step that did not happen | 5 elapsed-day columns (table below) | The gap lines up with the column recording the step |
 | 3. Truly missing | The step happened but its day was not recorded | About 1,600 IVF rows across the same 5 columns; 2 rows of `특정 시술 유형` | Mismatches in the table below |
-| 4. "No" left blank | Yes/no columns whose only recorded value is 1 | `착상 전 유전 검사 사용 여부`, `PGS 시술 여부`, `PGD 시술 여부` (99% blank) | No 0 is ever recorded |
+| 4. Blank in a flag that records only 1 | Probably "no" (assumed, not confirmed by the official data dictionary) | `착상 전 유전 검사 사용 여부`, `PGS 시술 여부`, `PGD 시술 여부` (99% blank) | No 0 is ever recorded |
 | 5. Unknown | No structural explanation | `임신 시도 또는 마지막 임신 경과 연수` (96.3% blank, including 44,546 rows with a previous pregnancy); "알 수 없음" or "기록되지 않은 시행" in age, ovulation-induction and donor-age columns | — |
 
 Elapsed-day columns among IVF rows:
@@ -34,7 +34,7 @@ transferred".
 | 1. DI not applicable | Training-fold median; string gap becomes `__MISSING__` | Left as NaN | Counts and flags 0 on DI rows; elapsed days −1 |
 | 2. Step not performed | Training-fold median | Left as NaN | −1, a value no real day can take |
 | 3. Truly missing | Training-fold median, indistinguishable from type 2 | Left as NaN, indistinguishable from type 2 | Left as NaN, plus a `<column>_truly_missing` indicator |
-| 4. "No" left blank | **Training-fold median, which is 1: "no" becomes "yes"** | Left as NaN | 0 |
+| 4. Blank in a flag that records only 1 | **Training-fold median, which is 1, so every blank becomes 1** | Left as NaN | 0 |
 | 5. Unknown | Median for numbers; text values stay as their own one-hot category | Same, but numbers left as NaN | Same as `native_nan` |
 
 Every rule is either row-wise or fitted on the training part of each fold: the flag
@@ -64,9 +64,14 @@ LightGBM (250 trees).
 
 ## Interpretation
 
-- **The median bug on yes/no columns was real but small.** Fixing only that raised AUC in
-  all five folds, by +0.00018. The columns are blank for 99% of rows, so few rows carry
-  the "yes".
+- **Treating flag blanks as 0 helped a little.** It raised AUC in all five folds, by
+  +0.00018. With the median every row of these columns becomes 1; with 0, the few rows
+  where 1 was actually recorded stand out. Why the gain is this small cannot be settled
+  by this experiment alone, and that a blank means "no" is an assumption.
+- **GAIN was not part of this comparison.** These results compare median, NaN and the
+  type rules. They do not separate the effect of GAIN itself from the leakage of the
+  competition pipeline (GAIN fitted before the split and with the target); that needs
+  GAIN fitted inside each fold.
 - **Separating the types did not help.** Once gaps are left as NaN, LightGBM learns inside
   each training fold where to send them, and the type is already recorded in other
   columns (`이식된 배아 수 = 0`, `동결 배아 사용 여부 = 0`, the treatment type). The
@@ -82,7 +87,8 @@ One seed and five folds that share training rows: differences are descriptive, n
 significance test. Cross-validation AUC on the training data is not comparable with
 leaderboard scores. The recorded run's commit (`dirty: true`) predates this script's
 commit; its `missing_types_cv_sha256` and `improve_cv_sha256` identify the executed
-source.
+source, and copies of both files are kept with a hash manifest in the run's `source/`
+folder.
 
 ## Reproduce
 

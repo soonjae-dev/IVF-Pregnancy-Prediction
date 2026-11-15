@@ -8,7 +8,7 @@
 >
 > - **Diagnosis**: My competition result was in the lower half (Private 544/794, AUC 0.714). Re-running the pipeline after the competition showed that applying SMOTE before cross-validation inflated validation AUC by about 0.18, and that GAIN imputation and feature selection had also seen the validation rows ([5-2](#5-2-the-089-tuning-score-was-smote-leakage), [8](#8-retrospective)).
 > - **Rebuild**: A baseline that learns only inside each fold, records data and source hashes, and reproduces its predictions byte for byte (cross-validation AUC 0.7392, [5-4](#5-4-a-leak-free-baseline)).
-> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003, and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405 ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
+> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003 (GAIN fitted inside each fold has not been compared yet), and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405 ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
 > - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here.
 
 ## 1. Project Overview
@@ -230,9 +230,10 @@ numeric and 2 are strings (specific treatment type, main reason for embryo creat
   [5-5](#5-5-missing-value-indicator-experiment) adds those indicators.
 - The "not applicable" gaps of DI rows are also filled with medians. The model can
   still separate DI rows through the treatment-type column.
-- All numeric gaps get the same treatment, whatever they mean. For three yes/no columns
-  (PGS, PGD, pre-implantation genetic testing) only "yes" (1) is ever recorded and a blank
-  means "no", so the median of 1 turns "no" into "yes". The effect of this and of each
+- All numeric gaps get the same treatment, whatever they mean. In three yes/no columns
+  (PGS, PGD, pre-implantation genetic testing) only 1 is ever recorded, so the training
+  median is 1 and every blank becomes 1. A blank there probably means "no", but the
+  official data dictionary has not been checked to confirm it. The effect of this and of each
   other type of gap is measured in [5-7](#5-7-handling-each-type-of-missing-value).
 - The ten count columns (for example total treatments, stored as `0회` … `6회 이상`)
   are strings in the raw file, so the baseline one-hot encodes them as categories rather
@@ -302,8 +303,10 @@ each training fold; tuning uses an inner split of the training fold.
 
 - **Missing-value handling was not the lever.** The best missing-value change moved AUC
   by +0.0003; setting DI gaps to 0 added nothing once the model saw NaN and the treatment
-  type. GAIN hurt the competition pipeline because it was fitted before the split and
-  with the target, not because a better imputer was waiting to be found.
+  type. These experiments did not include GAIN. The competition pipeline fitted GAIN
+  before the split and with the target, but separating the effect of GAIN itself from
+  that leakage needs a controlled comparison with GAIN fitted inside each fold, which
+  has not been run.
 - **Tuning and combining two different models helped**, by +0.0010 and +0.0005, in every
   fold. The final score is +0.0011 above the baseline.
 - **The domain ratios I built did not help.** Tree models already combine the raw counts.
@@ -324,26 +327,28 @@ with gaps fall into five types
 | 1. DI not applicable | Embryo and egg counts of DI treatments | 21 columns, all 6,291 DI rows |
 | 2. Step not performed | Transfer day when no embryo was transferred | 5 elapsed-day columns; e.g. 36,535 IVF rows with no transfer |
 | 3. Truly missing | Embryos were transferred but the transfer day is blank | About 1,600 IVF rows |
-| 4. "No" left blank | PGS, PGD and genetic-testing flags record only 1 | 3 columns, 99% blank |
+| 4. Blank in a flag that records only 1 (probably "no") | PGS, PGD and genetic-testing flags | 3 columns, 99% blank |
 | 5. Unknown | Years since the last pregnancy attempt | 96.3% blank, no structural reason |
 
 [`missing_types_cv.py`](missing_types_cv.py) encodes each type explicitly: 0 for
-not-applicable counts and for blank "no" flags, −1 for days of steps that did not happen,
+not-applicable counts and for blanks in those flags, −1 for days of steps that did not happen,
 and an indicator for truly missing days. Every rule is row-wise or chosen from the training
 fold. It was compared on the same five folds with the baseline and with leaving every gap
 as NaN.
 
 | Comparison | Difference in OOF AUC | Folds up |
 |---|---:|---:|
-| Fix only the "no" → "yes" bug (median imputation otherwise) vs baseline | +0.00018 | 5/5 |
+| Treat flag blanks as 0 (median imputation otherwise) vs baseline | +0.00018 | 5/5 |
 | Leave every gap as NaN vs baseline | +0.00032 | 4/5 |
 | Type rules vs NaN, untuned LightGBM | +0.00002 | 2/5 |
 | Type rules vs NaN, tuned LightGBM | +0.00003 | 3/5 |
 | Type rules vs NaN, CatBoost | −0.00024 | 1/5 |
 | Type rules vs NaN, LightGBM–CatBoost blend | −0.00014 | 0/5 |
 
-- **The baseline's median bug cost a little.** Fixing it helped in every fold, but by only
-  0.0002, because the three columns are blank for 99% of rows.
+- **Treating flag blanks as 0 helped a little.** AUC rose by +0.00018, in every fold. With
+  the median, all rows of these columns become 1; with 0, only the few rows where 1 was
+  actually recorded stand out. Why the gain is this small cannot be settled by this
+  experiment alone.
 - **Telling the types apart added nothing beyond NaN.** When gaps stay as NaN, the model
   learns inside each training fold where to send them, and the type is already visible in
   other columns (transferred embryos = 0, frozen embryo used = 0, treatment type).
@@ -470,8 +475,9 @@ Three differences stood out.
 Testing these differences on my own leak-free folds ([5-6](#5-6-what-actually-raised-the-score),
 [5-7](#5-7-handling-each-type-of-missing-value)) refined the first two. Once nothing was fitted
 before the split, the way gaps were filled (median, NaN, 0 for DI, a rule per type) changed
-AUC by at most 0.0003; what GAIN cost me was where and with what it was fitted, not the choice
-of imputer. The ratio features I built did not help either, so I cannot confirm from my own
+AUC by at most 0.0003. GAIN was not among the methods compared: the competition pipeline
+fitted it before the split and with the target, and telling the effect of GAIN itself apart
+from that leakage would need GAIN fitted inside each fold. The ratio features I built did not help either, so I cannot confirm from my own
 runs how much the top teams' features contributed. What did help, in every fold, was
 tuning inside the fold and a rank average of two different models, close to what the
 13th-place team did.

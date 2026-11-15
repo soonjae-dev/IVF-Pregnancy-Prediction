@@ -33,6 +33,8 @@ the remaining cache problems without such an experiment.
 |---|---|---|
 | GAIN reconstruction loss computed on observed entries only | [`src/gain_imputer.py`](../src/gain_imputer.py) | [`test_gain_reconstruction.py`](../tests/test_gain_reconstruction.py) |
 | Generator output detached during discriminator training | [`src/gain_imputer.py`](../src/gain_imputer.py) | None (code inspection only) |
+| Final imputation pass in evaluation mode (no dropout, BatchNorm running statistics; added 2026-11-15) | [`src/gain_imputer.py`](../src/gain_imputer.py) | [`test_review_fixes.py`](../tests/test_review_fixes.py) |
+| Cache reused only when data, source and build options match (added 2026-11-15) | [`build_cache.py`](../build_cache.py) | [`test_review_fixes.py`](../tests/test_review_fixes.py) |
 | Adversarial loss computed on missing entries | [`src/gain_imputer.py`](../src/gain_imputer.py) | [`test_gain_adversarial.py`](../tests/test_gain_adversarial.py) |
 | Fold-fitted LightGBM baseline | [`baseline_cv.py`](../baseline_cv.py) | [`test_baseline_cv.py`](../tests/test_baseline_cv.py) |
 

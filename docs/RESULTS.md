@@ -83,7 +83,11 @@ imbalanced-learn 0.12.0, torch 2.2.1 (GAIN), numpy 1.26.4, pandas 2.2.1.
 | CatBoost | 0.9032 | 0.7199 | 0.183 |
 | Random Forest | 0.9049 | 0.7289 | 0.176 |
 
-The gaps match those in `cv_results.json` (0.178–0.186). This is a single-seed run; the
+The gaps match those in `cv_results.json` (0.178–0.186). This cache was built before two
+later changes to the legacy code: the final GAIN pass now runs the generator in evaluation
+mode (`G.eval()`), and caches now record and check how they were built. A rebuild with the
+current source would therefore produce a different matrix; the recorded figures were not
+rerun. This is a single-seed run; the
 in-fold column still inherits the shared-cache leakage described in the
 [validation audit](VALIDATION_AUDIT.md).
 

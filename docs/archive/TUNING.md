@@ -77,10 +77,12 @@ python ensemble_study.py
 ```
 
 It builds `data/gain_cache.npz` if it is missing and reports legacy shared-cache
-metrics. If the feature pipeline changes, preserve any cache needed to interpret
-previous runs and rebuild the default cache with `python build_cache.py --force`.
-Cache reuse checks required keys, not source or data hashes, so an existing cache
-can otherwise silently retain an older representation.
+metrics. Each cache stores how it was built: the SHA-256 of the training and test
+CSVs, of `configs/config.json` and of the preprocessing and GAIN source files, plus
+the encoded columns, GAIN iterations and seed. `ensure_cache()` reuses a cache only
+when that record matches the request; otherwise it renames the old file to
+`<name>.stale-<timestamp>.npz` and rebuilds. Caches written before this record
+existed are treated as stale.
 
 The build happens in a separate process, on purpose. GAIN is the only step that
 needs PyTorch, and every study script imports LightGBM, XGBoost and CatBoost at

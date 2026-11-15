@@ -274,6 +274,26 @@ def run_variant(variant, X, y, folds, args, previous_oof):
                  "elapsed_seconds": perf_counter() - started}
 
 
+def select_variants(text):
+    """
+    Parse --variants and return them in ladder order, checked before any training.
+
+    The ladder is cumulative and blend reads the OOF predictions of lgb_tuned and
+    catboost, so the order is fixed by VARIANTS whatever order the user typed.
+    """
+    requested = [v.strip() for v in text.split(",") if v.strip()]
+    unknown = sorted(set(requested) - set(VARIANTS))
+    if unknown:
+        raise ValueError(f"unknown variants {unknown}; choose from {VARIANTS}")
+    if len(set(requested)) != len(requested):
+        raise ValueError("each variant may be listed once")
+    if "baseline" not in requested:
+        raise ValueError("variants must include baseline")
+    if "blend" in requested and not {"lgb_tuned", "catboost"} <= set(requested):
+        raise ValueError("blend needs lgb_tuned and catboost")
+    return [v for v in VARIANTS if v in requested]
+
+
 def paired(a, b):
     deltas = [y["roc_auc"] - x["roc_auc"] for x, y in zip(a["fold_results"], b["fold_results"])]
     return {"fold_auc_deltas": deltas, "mean_fold_delta": float(np.mean(deltas)),
@@ -290,15 +310,14 @@ def main():
     parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--trials", type=int, default=25)
     parser.add_argument("--estimators", type=int, default=250)
-    parser.add_argument("--variants", default=",".join(VARIANTS))
+    parser.add_argument("--variants", default=",".join(VARIANTS),
+                        help="comma-separated subset; always run in ladder order")
     args = parser.parse_args()
     args.folds = 5
-    variants = [v.strip() for v in args.variants.split(",")]
-    unknown = set(variants) - set(VARIANTS)
-    if unknown or "baseline" not in variants:
-        parser.error(f"variants must include baseline and come from {VARIANTS}")
-    if "blend" in variants and not {"lgb_tuned", "catboost"} <= set(variants):
-        parser.error("blend needs lgb_tuned and catboost")
+    try:
+        variants = select_variants(args.variants)
+    except ValueError as error:
+        parser.error(str(error))
 
     provenance = collect_provenance(args.data, args)
     provenance["code"]["improve_cv_sha256"] = file_sha256(__file__)
