@@ -10,9 +10,10 @@ a notebook's first cell. Nothing imported any of it: every consumer takes
 set_seed and get_device and nothing else.
 
 That mattered more than tidiness. skorch pulls in torch, so `from src.config
-import set_seed` loaded torch into whatever process asked, and on macOS a
-process holding torch alongside LightGBM, XGBoost and CatBoost dies on a
-duplicate OpenMP runtime. main.py went through this import.
+import set_seed` loaded torch into whatever process asked, and in the original
+local macOS environment a process holding torch alongside LightGBM, XGBoost and
+CatBoost crashed with a segmentation fault (likely duplicate OpenMP runtimes;
+not verified on other installations). main.py went through this import.
 
 torch is now imported inside get_device, which only build_cache.py calls, and
 nowhere else.

@@ -7,9 +7,10 @@ skorch. It is not part of the pipeline: main.py never calls it, and
 configs/tab_params.json records a search run under the old leaky protocol.
 
 It lives in its own module because it is the only thing in the optimization
-code that needs torch. On macOS, importing torch into a process that already
-holds LightGBM, XGBoost and CatBoost -- or the reverse -- takes the process
-down with a duplicate-OpenMP segmentation fault. Keeping it here lets tune.py
+code that needs torch. In the original local macOS environment, importing
+torch into a process that already held LightGBM, XGBoost and CatBoost -- or
+the reverse -- crashed the process with a segmentation fault (likely duplicate
+OpenMP runtimes; not verified on other installations). Keeping it here lets tune.py
 and every study script import src.optimization without dragging torch in
 behind it.
 """

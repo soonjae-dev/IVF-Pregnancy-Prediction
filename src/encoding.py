@@ -148,9 +148,13 @@ def run_encoding_pipeline(
 
     That was not a judgement anyone made. It surfaced when the age bracket was
     found to be worth 0.0148 ROC-AUC while sitting on the wrong side of this
-    line, so column_study.py asked the same question of the rest: encode all
-    nine and the matrix goes from 39 features to 104, worth +0.0030 AUC to
-    LightGBM and +0.0069 to XGBoost.
+    line, so column_study.py asked the same question of the rest. Encoding all
+    nine takes the matrix from 39 features to 104 (39 plus the per-column
+    one-hot counts in column_study.json). The published column_study.json
+    records only the single-column variants and the seven-column "combined"
+    variant (83 features, +0.0023 OOF AUC with LightGBM); it has no recorded
+    score for all nine together. These are historical shared-cache results;
+    see docs/VALIDATION_AUDIT.md.
 
     "시술 유형" is deliberately absent: features.py copies it to
     "시술 유형_원본" beforehand, so adding it here would duplicate those

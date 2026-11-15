@@ -16,11 +16,11 @@ fold assignments are checked for exact alignment before a report is saved.
 
 | Fold | Baseline AUC | With indicators | Difference |
 |---|---:|---:|---:|
-| 1 | 0.737002 | 0.737005 | +0.000003 |
+| 1 | 0.737002 | 0.737005 | +0.0000033 |
 | 2 | 0.741959 | 0.742271 | +0.000312 |
 | 3 | 0.739233 | 0.739577 | +0.000345 |
 | 4 | 0.737799 | 0.737859 | +0.000060 |
-| 5 | 0.740195 | 0.740196 | +0.000000 |
+| 5 | 0.740195 | 0.740196 | +0.0000004 |
 | Pooled OOF | 0.739219 | 0.739365 | +0.000146 |
 
 Mean fold difference: +0.000144; sample standard deviation of

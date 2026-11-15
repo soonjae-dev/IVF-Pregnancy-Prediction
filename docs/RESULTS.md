@@ -15,8 +15,8 @@ executed source can be checked directly:
 shasum -a 256 baseline_cv.py   # fb0d971a315d7f5a2e0811572efa8ff4d58e250bddb1a8b30b2a4b60943a0531
 ```
 
-The run was made before the repository's first commit, so its Git fields are
-empty (`commit: null`); the source hash is the identifier. It also records the
+The run was made before the repository's first commit, so it records no commit
+(`commit: null`, `dirty: true`); the source hash is the identifier. It also records the
 dataset hash, prediction-file hash and Python/package versions.
 
 Some earlier records (the standalone full run and the missingness comparison)

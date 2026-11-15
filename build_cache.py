@@ -14,8 +14,9 @@ reads. There is one copy now.
 Running it in its own process is the other half of the point. GAIN is the only
 part of the pipeline that needs PyTorch, and the study scripts import LightGBM,
 XGBoost and CatBoost at module level. On macOS each of those links its own
-OpenMP runtime, and loading PyTorch's on top of them can take the process down
-with a segmentation fault before GAIN prints anything. Keeping torch in a
+OpenMP runtime, and in the original local macOS environment loading PyTorch's on
+top of them took the process down with a segmentation fault before GAIN printed
+anything (not verified on other installations). Keeping torch in a
 process that has never imported a boosting library sidesteps that entirely, and
 costs one subprocess spawn.
 

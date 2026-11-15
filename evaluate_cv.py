@@ -210,8 +210,9 @@ def main() -> None:
     parser.add_argument("--params-dir", default="configs")
     parser.add_argument("--out", default=None,
                         help="default cv_results.json, or a _sample suffix when "
-                             "--sample is given, so a quick run cannot clobber "
-                             "the recorded figures")
+                             "--sample is given. A default path that already "
+                             "exists is never overwritten; pass --out to choose "
+                             "a new file")
     parser.add_argument("--models", default="xgb,lgb,cat,rf")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--skip-leaky", action="store_true")
@@ -224,6 +225,11 @@ def main() -> None:
     if args.out is None:
         args.out = (f"cv_results_sample{args.sample}.json" if args.sample
                     else "cv_results.json")
+        # The recorded cv_results.json used the competition-time parameters
+        # (now configs/*_params.leaky.json), while --params-dir defaults to the
+        # re-tuned configs. A default run must not replace that record.
+        if os.path.exists(args.out):
+            parser.error(f"{args.out} already exists; pass --out with a new path")
 
     log(f"loading {args.data or CACHE}")
     X, y = load_dataset(args.data)

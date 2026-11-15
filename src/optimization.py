@@ -6,7 +6,8 @@ This module defines Optuna objective functions and optimization studies for
 multiple machine learning models (XGBoost, LightGBM, RandomForest, CatBoost)
 and nothing else. The TabTransformer moved to src/tab_transformer.py, because
 it was the only thing here that needed torch and importing torch alongside the
-boosting libraries segfaults on macOS.
+boosting libraries segfaulted in the original local macOS environment
+(see docs/archive/TUNING.md).
 
 Every objective scores a scikit-learn Pipeline, not a bare estimator, so the
 scaler is fitted on each fold's training part alone. An earlier version applied

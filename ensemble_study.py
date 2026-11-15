@@ -24,8 +24,9 @@ learners and the decision threshold alike.
 
 This differs from main.py's StackingClassifier, which fits its meta model on an
 internal cross-validation of the training data. Using the calibration split
-instead costs one round of base fits rather than five, and removes the internal
-resampling leak noted in the audit.
+instead costs one round of base fits rather than five. It does not remove the
+shared-cache limitations: feature selection and GAIN were learned on all rows
+before these folds (see docs/VALIDATION_AUDIT.md).
 
 Usage:
   python ensemble_study.py [--out ensemble_study.json]

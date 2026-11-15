@@ -9,8 +9,10 @@ script picks up the matrix they produce.
 That is not an optimisation, though it is one: the cache means GAIN runs once
 across every script in the repository instead of once per script. It is a
 requirement. GAIN needs PyTorch, this script needs LightGBM, XGBoost and
-CatBoost, and on macOS a process holding torch alongside any of those dies on a
-duplicate OpenMP runtime -- in either import order. See docs/archive/TUNING.md.
+CatBoost, and in the original local macOS environment a process holding torch
+alongside any of those crashed with a segmentation fault, in either import
+order (likely duplicate OpenMP runtimes). This was observed on one machine, not
+on every macOS installation. See docs/archive/TUNING.md.
 """
 
 import json

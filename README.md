@@ -126,12 +126,19 @@ I measured this comparison twice.
 With different input data, the gap between the two protocols stayed almost the same,
 0.175–0.186. The re-measurement had already dropped the leaky age-group success-rate
 feature, yet the gap did not change, so the 0.18 does not come from that feature. Both
-measurements keep the GAIN cache unchanged, so the "SMOTE in fold" columns still carry the
-GAIN leakage described in [8-2](#8-2-training-and-test-data-were-processed-differently).
+measurements reuse a shared GAIN cache built before the split, so the "SMOTE in fold"
+columns are not leak-free either. In both, GAIN and the label-based feature selection
+were fitted on all rows before the split ([8-1](#8-1-why-the-validation-score-was-optimistic)).
+The first measurement's cache also had the target inside GAIN
+([8-2](#8-2-training-and-test-data-were-processed-differently)); the rebuilt cache holds
+the target out.
 
 The "~0.89–0.91" in 5-1 is the best score Optuna recorded during the competition (four
 models): 0.885–0.891 by model in the parameter files saved during the competition, and
-0.913–0.915 in the final notebook run that produced the 0.760 validation score. The "SMOTE
+0.913–0.915 in the final notebook run that produced the 0.760 validation score. The
+outputs of that final run are kept only in a local working copy of the notebook; the
+published notebook has its outputs cleared, so these two figures cannot be checked from
+this repository. The "SMOTE
 before split" columns (both first and re-run) were measured again after the competition
 with the saved parameter files, so the numbers differ slightly. All are scores with SMOTE
 applied before the split.
@@ -212,7 +219,8 @@ prediction. Re-running on the same machine reproduces the predictions byte for b
 ([reference run](results/baseline_20261110T161422_601162Z/summary.json),
 [run log](docs/RESULTS.md)).
 
-The reference run predates the repository's first commit, so its Git fields are empty.
+The reference run predates the repository's first commit, so it records no commit
+(`commit: null`, `dirty: true`).
 Its recorded source hash matches this repository's `baseline_cv.py`, so the executed code
 can be checked directly.
 

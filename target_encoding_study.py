@@ -2,7 +2,14 @@
 """
 target_encoding_study.py — is the age target encoding leaking, and does it help?
 
-src/features.py::create_age_success_rate builds the feature
+HISTORICAL SCRIPT. It produced target_encoding_study.json against an older
+cache. The target encoding it studies has since been removed from
+src/features.py (see the note there) and the age bracket is now one-hot encoded
+by src/encoding.py, so the current cache no longer contains the feature and this
+script exits with an error when run against it. The description below is the
+state of the pipeline at the time of the study.
+
+src/features.py::create_age_success_rate (since removed) built the feature
 "연령대 평균 임신 성공률" by grouping the training set on the age bracket and
 taking the mean of the label. Two things are wrong with that in principle:
 
@@ -36,7 +43,7 @@ score, and this study runs on the shared cache, which learns feature selection
 and GAIN imputation before validation (see docs/VALIDATION_AUDIT.md).
 
 The grouping matters here more than it looks: "시술 당시 나이" is an object
-column, so encoding.py drops it, and this feature is the only path by which age
+column, so encoding.py dropped it at the time, and this feature is the only path by which age
 reaches the model at all. Success rate runs 0.323 to 0.118 across the brackets,
 which is why dropping it costs as much as it does.
 
