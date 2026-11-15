@@ -139,7 +139,9 @@ def load_oof(run, variant, recorded):
     expected = recorded["variants"][variant]["oof_artifact"]["sha256"]
     if file_sha256(path) != expected:
         raise ValueError(f"{path} does not match the hash recorded in comparison.json")
-    frame = pd.read_csv(path)
+    # round_trip: the default parser can change the last digit, which breaks ties
+    # differently and moves AUC by about 1e-6.
+    frame = pd.read_csv(path, float_precision="round_trip")
     return frame.sort_values("source_row_index").reset_index(drop=True)
 
 

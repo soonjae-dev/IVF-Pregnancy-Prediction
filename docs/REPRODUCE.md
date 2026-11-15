@@ -21,15 +21,24 @@ retry the import. This system package step is conditional on that error.
 To run the complete synthetic-data test suite, also install the test requirements:
 
 ```bash
-python -m pip install -r requirements-test.txt
+python -m pip install -r requirements-test.txt -r requirements-improve.txt
 python -m unittest discover -s tests -v
 ```
 
 The test requirements include the baseline requirements and PyTorch 2.2.1 for
 GAIN loss regression tests. The supported baseline itself does not use PyTorch.
 The [GitHub Actions workflow](../.github/workflows/tests.yml) installs
-`requirements-test.txt` on Ubuntu with Python 3.11 (CPU-only PyTorch wheels)
-and runs this suite on every push and pull request.
+`requirements-test.txt` and `requirements-improve.txt` on Ubuntu with Python 3.11
+(CPU-only PyTorch wheels) and runs this suite on every push and pull request.
+
+`tests/test_pipeline_e2e.py` runs `improve_cv.py`, `missing_types_cv.py`,
+`seed_cv.py`, `error_analysis.py` and `final_model.py train`/`predict` as commands on
+synthetic files with the competition's schema (`tests/synthetic_ivf.py`: 1,500 training
+and 300 test rows, random values, structural gaps as in the real data). Tuning is cut
+to 2 trials. It checks wiring, not scores: OOF rows line up with the input, labels are
+intact, scores are finite, recorded hashes and metrics match the saved files, split
+seed 42 reproduces `missing_types_cv.py`, and the final model's predictions survive a
+save and reload. Without CatBoost and Optuna these tests are skipped.
 
 The full `requirements.txt` is optional for the legacy training, tuning and study
 scripts. Install it in a separate virtual environment rather than on top of the baseline

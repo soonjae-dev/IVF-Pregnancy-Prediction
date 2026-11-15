@@ -1,0 +1,11 @@
+{
+  "archived_on": "2026-11-16",
+  "record": "../comparison.json",
+  "note": "Copy of the executed seed_cv.py, kept before seed_cv.py was changed to compare split seed 42 only with a run on the same data. The hash matches the original report; original provenance and metrics were not rewritten.",
+  "files": {
+    "seed_cv.py": {
+      "sha256": "f7602af34ca233908ccd0f85486bca4983907b4a9a76e34b0c9fc73fd3778600",
+      "provenance_key": "provenance.code.seed_cv_sha256"
+    }
+  }
+}

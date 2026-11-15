@@ -80,15 +80,24 @@ def summarize(per_seed):
     return out
 
 
-def check_seed42(per_seed, sample):
-    """Compare split seed 42 with the recorded missing_types run, when it applies."""
+def check_seed42(per_seed, sample, data_sha, results_dir):
+    """
+    Compare split seed 42 with the latest missing_types run in results_dir made
+    on the same data file, when there is one.
+    """
     if 42 not in per_seed or sample is not None:
         return None
-    runs = sorted(Path("results").glob("missing_types_*/comparison.json"))
+    runs = []
+    for path in sorted(Path(results_dir).glob("missing_types_*/comparison.json")):
+        report = json.loads(path.read_text(encoding="utf-8"))
+        if (report["provenance"]["dataset"]["sha256"] == data_sha
+                and report["settings"].get("sample") is None):
+            runs.append((path, report))
     if not runs:
         return None
-    recorded = json.loads(runs[-1].read_text(encoding="utf-8"))["variants"]
-    return {"run": str(runs[-1].parent),
+    path, report = runs[-1]
+    recorded = report["variants"]
+    return {"run": str(path.parent),
             "auc_abs_difference": {v: abs(per_seed[42]["variants"][v]["oof_roc_auc"]
                                          - recorded[v]["oof_roc_auc"]) for v in VARIANTS}}
 
@@ -166,7 +175,8 @@ def main():
     if file_sha256(args.data) != provenance["dataset"]["sha256"]:
         raise RuntimeError("Dataset changed during the experiment")
     report["summary"] = summarize(per_seed)
-    report["seed42_reproduces_missing_types"] = check_seed42(per_seed, args.sample)
+    report["seed42_reproduces_missing_types"] = check_seed42(
+        per_seed, args.sample, provenance["dataset"]["sha256"], args.output_dir)
     report["interpretation"] = (
         "Split seeds reuse the same rows. Agreement across seeds shows the gain does not "
         "depend on one particular split; the seeds are not independent samples, and model "

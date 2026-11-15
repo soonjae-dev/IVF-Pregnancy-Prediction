@@ -459,10 +459,12 @@ python final_model.py train                     # train and save the final model
 python final_model.py predict --model models/final_<time> --input data/test.csv
 ```
 
-Tests run without the competition data:
+Tests run without the competition data. They include an end-to-end run of every
+experiment script and of the final model on synthetic data with the competition's
+schema (about 2 minutes):
 
 ```bash
-python -m pip install -r requirements-test.txt
+python -m pip install -r requirements-test.txt -r requirements-improve.txt
 python -m unittest discover -s tests -v
 ```
 

@@ -419,10 +419,11 @@ python final_model.py train                     # 최종 모델 학습·저장, 
 python final_model.py predict --model models/final_<시각> --input data/test.csv
 ```
 
-테스트는 데이터셋 없이 돌아간다.
+테스트는 데이터셋 없이 돌아간다. 대회 데이터와 같은 형식의 합성 데이터로 모든 실험
+스크립트와 최종 모델을 처음부터 끝까지 실행하는 테스트도 포함된다(약 2분).
 
 ```bash
-python -m pip install -r requirements-test.txt
+python -m pip install -r requirements-test.txt -r requirements-improve.txt
 python -m unittest discover -s tests -v
 ```
 

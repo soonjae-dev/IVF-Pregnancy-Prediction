@@ -103,4 +103,5 @@ python final_model.py train --sample 5000 --trials 2   # quick check
 ```
 
 The tests in `tests/test_final_model.py` are skipped when CatBoost or Optuna is not
-installed, as in the CI environment, which installs only `requirements-test.txt`.
+installed. CI installs both, and `tests/test_pipeline_e2e.py` also runs `train` and
+`predict` as commands on synthetic data.

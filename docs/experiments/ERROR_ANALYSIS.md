@@ -6,8 +6,12 @@ Where does the best model (`nan_blend`, OOF ROC-AUC 0.74052) gain over the basel
 - Script: [`error_analysis.py`](../../error_analysis.py). It does no training: it reads
   the out-of-fold predictions the [missing-value types run](MISSING_TYPES.md) saved and
   checks them against the SHA-256 hashes recorded in that run's `comparison.json`.
-- Result: [`results/error_analysis_20261115T122222Z/summary.json`](../../results/error_analysis_20261115T122222Z/summary.json).
+- Result: [`results/error_analysis_20261115T162321Z/summary.json`](../../results/error_analysis_20261115T162321Z/summary.json).
   It holds aggregates only, with no input rows or per-row predictions.
+- Re-run on 2026-11-16 after a fix: the script now reads the OOF files with exact
+  float parsing (`float_precision="round_trip"`). The default parser could change the
+  last digit of a score and moved AUC by about 1e-6. Of the numbers below, only one
+  interval bound changed at four decimals (0 transferred: +0.1515 → +0.1514).
 - Same rows and same folds for both models (seed 42, 5 folds). The interval is a paired
   bootstrap over rows (200 rounds, positives and negatives resampled separately). It
   shows how stable the difference is on these rows, not on new data or another split.
@@ -53,7 +57,7 @@ those four lines repeat one result.
 | | donor | 15,769 | 4,974 | 31.5% | 0.6797 → 0.6816 | +0.0019 (−0.0004 to +0.0043) | 0.4543 → 0.4582 |
 | Frozen embryo | no | 209,934 | 56,212 | 26.8% | 0.7466 → 0.7476 | +0.0010 (+0.0007 to +0.0013) | 0.4629 → 0.4653 |
 | | yes | 40,126 | 9,205 | 22.9% | 0.6500 → 0.6546 | +0.0046 (+0.0026 to +0.0066) | 0.3315 → 0.3364 |
-| Embryos transferred | 0 | 36,544 | 30 | 0.08% | 0.5856 → 0.6122 | +0.0265 (−0.0957 to +0.1515) | 0.0011 → 0.0043 |
+| Embryos transferred | 0 | 36,544 | 30 | 0.08% | 0.5856 → 0.6122 | +0.0265 (−0.0957 to +0.1514) | 0.0011 → 0.0043 |
 | | 1 | 93,791 | 29,408 | 31.4% | 0.6823 → 0.6843 | +0.0020 (+0.0014 to +0.0027) | 0.4550 → 0.4582 |
 | | 2 | 110,845 | 34,483 | 31.1% | 0.6543 → 0.6557 | +0.0014 (+0.0008 to +0.0020) | 0.4475 → 0.4493 |
 | | 3 or more | 8,880 | 1,496 | 16.8% | 0.6630 → 0.6667 | +0.0037 (−0.0003 to +0.0071) | 0.2848 → 0.2895 |

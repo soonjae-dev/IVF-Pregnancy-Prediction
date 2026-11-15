@@ -44,7 +44,7 @@ independence.
 | [Earlier full summary](../results/baseline_cv_full.json) | Same metrics; lacks environment/source provenance. |
 | [Improvement ladder](../results/improve_20261115T064857_957864Z/comparison.json) | Same folds; its `baseline` step reproduces the reference metrics exactly. See [IMPROVEMENT.md](experiments/IMPROVEMENT.md). |
 | [Missing-value types](../results/missing_types_20261115T072026_459803Z/comparison.json) | Same folds; its `baseline` step reproduces the reference metrics exactly. See [MISSING_TYPES.md](experiments/MISSING_TYPES.md). |
-| [Subgroup error analysis](../results/error_analysis_20261115T122222Z/summary.json) | No training; reads the missing-value-types OOF files after checking their recorded hashes. `baseline` vs `nan_blend` by subgroup. See [ERROR_ANALYSIS.md](experiments/ERROR_ANALYSIS.md). |
+| [Subgroup error analysis](../results/error_analysis_20261115T162321Z/summary.json) | No training; reads the missing-value-types OOF files after checking their recorded hashes. `baseline` vs `nan_blend` by subgroup. See [ERROR_ANALYSIS.md](experiments/ERROR_ANALYSIS.md). |
 | [Split seeds](../results/seeds_20261115T142328_492960Z/comparison.json) | Five split seeds; split seed 42 reproduces the missing-value-types run exactly. See [SEEDS.md](experiments/SEEDS.md). |
 | [Final model](../results/final_model_20261115T161344_326127Z.json) | Best combination trained on all rows; test predictions identical before saving and after loading. No leaderboard score. See [FINAL_MODEL.md](FINAL_MODEL.md). |
 | [5,000-row sample](../results/baseline_cv_sample_5000.json) | Three-fold smoke run; reproduced exactly by the current source. Not comparable with the full baseline. |
