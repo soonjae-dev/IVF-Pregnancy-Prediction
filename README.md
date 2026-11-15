@@ -4,10 +4,12 @@
 
 [![Synthetic-data tests](https://github.com/soonjae-dev/IVF-Pregnancy-Prediction/actions/workflows/tests.yml/badge.svg)](https://github.com/soonjae-dev/IVF-Pregnancy-Prediction/actions/workflows/tests.yml)
 
-> **Summary**: My competition result was in the lower half (Private 544/794, AUC 0.714).
-> A post-competition analysis confirmed validation leakage: the leaky evaluation reported a cross-validation AUC about 0.18 higher than evaluation on original validation rows.
-> I then rebuilt a reproducible baseline that learns only inside each fold (cross-validation AUC 0.739).
-> On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003; nested tuning and a LightGBM–CatBoost rank blend raised it to 0.7405.
+> **Summary**
+>
+> - **Diagnosis**: My competition result was in the lower half (Private 544/794, AUC 0.714). Re-running the pipeline after the competition showed that applying SMOTE before cross-validation inflated validation AUC by about 0.18, and that GAIN imputation and feature selection had also seen the validation rows ([5-2](#5-2-the-089-tuning-score-was-smote-leakage), [8](#8-retrospective)).
+> - **Rebuild**: A baseline that learns only inside each fold, records data and source hashes, and reproduces its predictions byte for byte (cross-validation AUC 0.7392, [5-4](#5-4-a-leak-free-baseline)).
+> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003, and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405 ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
+> - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here.
 
 ## 1. Project Overview
 
@@ -349,6 +351,14 @@ as NaN.
   rank blend of tuned LightGBM and CatBoost: **OOF AUC 0.74052**, +0.0013 above the
   baseline in every fold, and slightly above the 5-6 blend that included the ratios.
 
+**How to read 0.7405.** It is the best of several variants compared on the same five
+folds with one seed, so it is slightly optimistic. It is cross-validation AUC on the
+training data, and submissions closed with the competition, so it cannot be placed on the
+leaderboard; leaderboard scores near the top are only thousandths apart, and a
+cross-validation score cannot say which side of those gaps a model would land on. What
+these experiments support is the direction (which changes help, consistently across
+folds), not a rank.
+
 ## 6. Repository Layout
 
 | Path | Contents |
@@ -432,7 +442,9 @@ Details with code references are in the [validation audit](docs/VALIDATION_AUDIT
 
 After the competition I read the Private 3rd- and 13th-place code shared on the DACON
 board and compared it with my approach. The Private scores are from the leaderboard;
-everything else was checked directly in the two notebooks.
+everything else was checked directly in the two notebooks. The table compares methods.
+My post-competition scores are cross-validation on the training data, not on this scale,
+so they are left out of it.
 
 | | My approach | [Private 3rd](https://dacon.io/competitions/official/236452/codeshare/12308) | [Private 13th](https://dacon.io/competitions/official/236452/codeshare/12296) |
 |---|---|---|---|
@@ -455,6 +467,15 @@ Three differences stood out.
 - **The top teams skipped SMOTE and matched the metric.** The 13th-place team used the fact that
   ROC-AUC only looks at order, converting predictions to ranks before a weighted average.
 
+Testing these differences on my own leak-free folds ([5-6](#5-6-what-actually-raised-the-score),
+[5-7](#5-7-handling-each-type-of-missing-value)) refined the first two. Once nothing was fitted
+before the split, the way gaps were filled (median, NaN, 0 for DI, a rule per type) changed
+AUC by at most 0.0003; what GAIN cost me was where and with what it was fitted, not the choice
+of imputer. The ratio features I built did not help either, so I cannot confirm from my own
+runs how much the top teams' features contributed. What did help, in every fold, was
+tuning inside the fold and a rank average of two different models, close to what the
+13th-place team did.
+
 Putting 8-1 to 8-3 together with this comparison, these are the points to improve.
 
 - **Question the validation score first.** Before changing the model, I should have checked
@@ -468,6 +489,10 @@ Putting 8-1 to 8-3 together with this comparison, these are the points to improv
 
 ### 8-5. Open questions
 
+- **How would the best post-competition model score on the hidden test set?** Submissions
+  are closed, so this cannot be measured. A partial check without labels is possible:
+  if a classifier cannot tell training rows from test rows, the two come from a similar
+  distribution and cross-validation is more likely to carry over.
 - **How much did the train/test processing mismatch cost on the leaderboard?** ([8-2](#8-2-training-and-test-data-were-processed-differently))
   This can be estimated without the leaderboard. Hold out part of the training data and
   score it twice with the same model: once filled by GAIN with the target, as the
