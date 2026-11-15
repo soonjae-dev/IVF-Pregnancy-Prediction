@@ -25,7 +25,7 @@ success from infertility treatment records and to identify the factors that driv
 |---|---:|---:|
 | My score | 0.71516 | 0.71446 |
 | Rank | 545 / 794 | 544 / 794 |
-| 1st place | 0.7435 | 0.74377 |
+| 1st place | 0.74350 | 0.74377 |
 
 ## 2. Dataset Overview
 
