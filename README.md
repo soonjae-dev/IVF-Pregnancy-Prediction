@@ -6,10 +6,9 @@
 
 > **Summary**
 >
-> - **Diagnosis**: My competition result was in the lower half (Private 544/794, AUC 0.714). Re-running the pipeline after the competition showed that applying SMOTE before cross-validation inflated validation AUC by about 0.18, and that GAIN imputation and feature selection had also seen the validation rows ([5-2](#5-2-the-089-tuning-score-was-smote-leakage), [8](#8-retrospective)).
-> - **Rebuild**: A baseline that learns only inside each fold, records data and source hashes, and reproduces its predictions byte for byte (cross-validation AUC 0.7392, [5-4](#5-4-a-leak-free-baseline)).
-> - **What moves the score**: On the same folds, changing the missing-value handling, even type by type, moved AUC by at most 0.0003 (GAIN fitted inside each fold has not been compared yet), and hand-made ratio features lowered it. Nested tuning and a LightGBM–CatBoost rank blend raised it in every fold, to 0.7405, and the gain held on five split seeds (mean +0.00125, positive in all 25 folds) ([5-6](#5-6-what-actually-raised-the-score), [5-7](#5-7-handling-each-type-of-missing-value)).
-> - **Limit**: Every post-competition score is cross-validation on the training data. Submissions are closed, so how these models would rank on the leaderboard cannot be checked, and they are not compared with leaderboard ranks here. The inputs include columns known only after treatment has progressed (such as the number of embryos transferred), so this is not the accuracy of a pre-treatment prediction; among rows with an embryo transferred, AUC is about 0.68 ([5-8](#5-8-where-the-model-is-right-and-where-it-fails)).
+> - Competition result in the lower half (Private 544/794, AUC 0.714)
+> - Post-competition analysis found that leakage from applying SMOTE inflated cross-validation AUC by about 0.18 ([5-2](#5-2-the-089-tuning-score-was-smote-leakage))
+> - Rebuilt a reproducible baseline that learns only inside each fold (cross-validation AUC 0.739, [5-4](#5-4-a-leak-free-baseline))
 
 ## 1. Project Overview
 
