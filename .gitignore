@@ -46,3 +46,6 @@ docs/private/
 
 # Original competition working folder (local only, ~5 GB)
 competition_archive/
+
+# Personal Claude Code hook rules (hookify)
+.claude/*.local.md
