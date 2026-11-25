@@ -80,7 +80,7 @@ summarised in [section 8](#8-retrospective).
 
 | Stage | ROC-AUC |
 |---|---:|
-| Cross-validation during tuning | ~0.89–0.91 |
+| Cross-validation during tuning | \~0.89–0.91 |
 | Validation set (20% holdout) | 0.760 |
 | Private leaderboard | 0.714 |
 
@@ -119,6 +119,10 @@ I measured this comparison twice.
   one-hot encoded, and the leaky age-group success-rate feature was replaced by an
   age-group one-hot.
 
+<p align="center">
+  <img src="docs/images/smote_leakage.png" alt="Cross-validation AUC with SMOTE before the split versus inside each fold, by model" width="85%">
+</p>
+
 | Model | SMOTE before split (first) | SMOTE in fold (first) | SMOTE before split (re-run) | SMOTE in fold (re-run) |
 |---|---:|---:|---:|---:|
 | XGBoost | 0.906 | 0.721 | 0.905 | 0.723 |
@@ -136,7 +140,7 @@ The first measurement's cache also had the target inside GAIN
 ([8-2](#8-2-training-and-test-data-were-processed-differently)); the rebuilt cache holds
 the target out.
 
-The "~0.89–0.91" in 5-1 is the best score Optuna recorded during the competition (four
+The "\~0.89–0.91" in 5-1 is the best score Optuna recorded during the competition (four
 models): 0.885–0.891 by model in the parameter files saved during the competition, and
 0.913–0.915 in the final notebook run that produced the 0.760 validation score. The
 outputs of that final run are kept only in a local working copy of the notebook; the
@@ -290,6 +294,10 @@ remaining gap was about missing values, I added one change at a time to the base
 data (imputation, column choice, hyperparameter search, early stopping) is fitted inside
 each training fold; tuning uses an inner split of the training fold.
 
+<p align="center">
+  <img src="docs/images/improvement_steps.png" alt="Change in OOF AUC for each cumulative step, pooled and per fold" width="85%">
+</p>
+
 | Step (cumulative) | OOF ROC-AUC | vs previous | Folds up |
 |---|---:|---:|---:|
 | Baseline (median imputation) | 0.73922 | | |
@@ -376,6 +384,10 @@ retraining, the out-of-fold predictions saved in 5-7 were split by subgroup to c
 baseline (0.7392) and the best blend (0.7405) on the same rows
 ([full tables and scope](docs/experiments/ERROR_ANALYSIS.md)).
 
+<p align="center">
+  <img src="docs/images/subgroup_gains.png" alt="AUC gain of the blend over the baseline by subgroup, with 95% intervals" width="85%">
+</p>
+
 | Rows | Count | Positive rate | AUC baseline → blend | Difference (95% interval) |
 |---|---:|---:|---|---|
 | All | 256,351 | 25.8% | 0.7392 → 0.7405 | +0.0013 (+0.0010 to +0.0017) |
@@ -429,6 +441,7 @@ saved, and given a load-and-predict path for new data ([details](docs/FINAL_MODE
 | `seed_cv.py` | The four key models on five split seeds (5-7) |
 | `final_model.py` | Trains the best combination on all rows, saves it, loads it and predicts (5-9) |
 | `predict_test.py` | Trains the same baseline on all training data and writes a submission file |
+| `make_figures.py` | Draws the README figures from saved result files |
 | `tests/` | Synthetic-data tests (run in CI) |
 | `results/` | Run records (summary.json with hashes) |
 | `docs/` | Validation audit, run log, reproduction guide |
@@ -456,6 +469,7 @@ python error_analysis.py                        # subgroup analysis, about a min
 python seed_cv.py                               # five split seeds, about 1h40
 python final_model.py train                     # train and save the final model, about 5 minutes
 python final_model.py predict --model models/final_<time> --input data/test.csv
+python make_figures.py                          # README figures
 ```
 
 Tests run without the competition data. They include an end-to-end run of every

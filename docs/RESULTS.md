@@ -58,7 +58,7 @@ preprocessing alone, because the two set-ups differ in at least four places:
 | | Competition pipeline (`evaluate_cv.py`, in-fold SMOTE) | Baseline (`baseline_cv.py`) |
 |---|---|---|
 | Preprocessing | Shared GAIN cache with target-based feature selection, learned before the split | Fold-fitted median imputation and one-hot encoding of all raw features |
-| Hyperparameters | Tuned against the leaky score (~0.89), `configs/*_params.leaky.json` | Untuned fixed values (250 trees, learning rate 0.05, 31 leaves) |
+| Hyperparameters | Tuned against the leaky score (\~0.89), `configs/*_params.leaky.json` | Untuned fixed values (250 trees, learning rate 0.05, 31 leaves) |
 | Resampling | SMOTE on the training part of each fold | None |
 | Training size | 20% of each training fold held out for threshold search, so 64% of all rows | 80% of all rows |
 
