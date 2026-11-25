@@ -44,7 +44,7 @@
 
 ### 4.1. 캐시 백업 파일의 덮어쓰기 가능성
 
-위치: [`build_cache.py`](../build_cache.py)의 `_set_aside()` (점검 당시 100\~104행 부근)
+위치: [`build_cache.py`](../legacy/build_cache.py)의 `_set_aside()` (점검 당시 100\~104행 부근)
 
 백업 파일 이름은 아래와 같이 초 단위 시각으로 생성된다.
 
@@ -60,9 +60,9 @@
 
 ### 4.2. 캐시 변경 감지 대상에서 `src/config.py` 누락
 
-위치: [`build_cache.py`](../build_cache.py)의 `SOURCES` (점검 당시 57\~59행 부근)
+위치: [`build_cache.py`](../legacy/build_cache.py)의 `SOURCES` (점검 당시 57\~59행 부근)
 
-캐시 생성 과정은 [`src/config.py`](../src/config.py)의 `get_device()`와 `set_seed()`를 사용하지만, 해당 파일은 해시 대상 목록에 포함되어 있지 않다.
+캐시 생성 과정은 [`src/config.py`](../legacy/src/config.py)의 `get_device()`와 `set_seed()`를 사용하지만, 해당 파일은 해시 대상 목록에 포함되어 있지 않다.
 
 임시 복사본에서 장치 선택 코드를 변경해도 `cache_spec()`이 반환하는 서명이 동일함을 확인하였다. 따라서 관련 동작을 수정해도 기존 캐시가 유효한 것으로 판단될 수 있다.
 
@@ -102,7 +102,7 @@ median_flags0: only the type 4 bug fixed
 ModuleNotFoundError: No module named 'seaborn'
 ```
 
-이 오류는 `src.feature_selection` import 과정에서 발생한다. `seaborn`은 [`requirements.txt`](../requirements.txt)에 명시되어 있으므로, 이 결과는 현재 환경의 설치 누락으로 구분해 해석해야 한다.
+이 오류는 `src.feature_selection` import 과정에서 발생한다. `seaborn`은 [`requirements.txt`](../legacy/requirements.txt)에 명시되어 있으므로, 이 결과는 현재 환경의 설치 누락으로 구분해 해석해야 한다.
 
 따라서 자동 테스트와 GAIN 단독 추론 검증은 통과하였으나, 실제 전처리부터 GAIN 캐시 생성·재사용까지의 전체 경로가 정상이라고 확정하지는 않는다. 구형 워크플로의 전체 의존성을 별도 환경에 설치한 후 추가 확인이 필요하다.
 

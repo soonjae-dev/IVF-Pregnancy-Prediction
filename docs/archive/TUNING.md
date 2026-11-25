@@ -4,7 +4,7 @@
 > The split does not make the full pipeline leakage-free. Use the
 > [current README](../../README.md) for supported reproduction and read the
 > [validation audit](../VALIDATION_AUDIT.md) before interpreting legacy results.
-> All commands below assume the repository root as the working directory.
+> All commands below assume the `legacy/` folder as the working directory (`cd legacy`).
 
 # Archived hyperparameter tuning workflow
 

@@ -39,16 +39,16 @@ README의 전체 구성, 대회 점수와 사후 교차검증 점수의 구분, 
 
 | 파일 | 확인된 직접 실패 원인 |
 |---|---|
-| [`main.py`](../main.py) | `ModuleNotFoundError: No module named 'xgboost'` |
-| [`column_study.py`](../column_study.py) | `src.optimization`을 통한 XGBoost import 실패 |
-| [`ensemble_study.py`](../ensemble_study.py) | XGBoost import 실패 |
-| [`target_encoding_study.py`](../target_encoding_study.py) | XGBoost import 실패 |
-| [`evaluate_cv.py`](../evaluate_cv.py) | `ModuleNotFoundError: No module named 'imblearn'` |
-| [`resampling_study.py`](../resampling_study.py) | imbalanced-learn import 실패 |
+| [`main.py`](../legacy/main.py) | `ModuleNotFoundError: No module named 'xgboost'` |
+| [`column_study.py`](../legacy/column_study.py) | `src.optimization`을 통한 XGBoost import 실패 |
+| [`ensemble_study.py`](../legacy/ensemble_study.py) | XGBoost import 실패 |
+| [`target_encoding_study.py`](../legacy/target_encoding_study.py) | XGBoost import 실패 |
+| [`evaluate_cv.py`](../legacy/evaluate_cv.py) | `ModuleNotFoundError: No module named 'imblearn'` |
+| [`resampling_study.py`](../legacy/resampling_study.py) | imbalanced-learn import 실패 |
 
 `skorch` 미설치는 패키지 메타데이터로 확인한 사항이며, 위 여섯 파일의 직접 실패 원인과는 별개이다.
 
-구형 의존성은 [`requirements.txt`](../requirements.txt)에 명시되어 있으므로, 위 실패를 코드 자체의 결함으로 단정해서는 안 된다. 또한 현재 PyTorch 버전(2.15.0)이 고정 버전(2.2.1)과 달라, 구형 환경 전체를 재현하려면 버전 차이까지 고려해야 한다.
+구형 의존성은 [`requirements.txt`](../legacy/requirements.txt)에 명시되어 있으므로, 위 실패를 코드 자체의 결함으로 단정해서는 안 된다. 또한 현재 PyTorch 버전(2.15.0)이 고정 버전(2.2.1)과 달라, 구형 환경 전체를 재현하려면 버전 차이까지 고려해야 한다.
 
 **권장 조치:** 구형 워크플로의 의존성을 별도 환경에 설치한 후 재실행. 현재 베이스라인 및 개선 실험의 의존성과 구분해 관리
 
@@ -56,7 +56,7 @@ README의 전체 구성, 대회 점수와 사후 교차검증 점수의 구분, 
 
 **분류:** 코드 동작 문제 · 우선 수정 권장
 
-위치: [`build_cache.py`](../build_cache.py)의 `_is_complete()` 및 `ensure_cache()` (점검 당시 55행, 72행 부근)
+위치: [`build_cache.py`](../legacy/build_cache.py)의 `_is_complete()` 및 `ensure_cache()` (점검 당시 55행, 72행 부근)
 
 `ensure_cache()`는 기존 파일에 필수 키가 있는지만 확인하며, 아래 변경 사항은 검사하지 않는다.
 
@@ -97,7 +97,7 @@ KeyError: 'lgb_tuned'
 
 **분류:** 추론 동작 검토 필요
 
-위치: [`src/gain_imputer.py`](../src/gain_imputer.py)의 최종 대체 단계 (점검 당시 225\~231행 부근)
+위치: [`src/gain_imputer.py`](../legacy/src/gain_imputer.py)의 최종 대체 단계 (점검 당시 225\~231행 부근)
 
 최종 출력 전에 `G.eval()`을 호출하지 않는다. 작은 입력으로 실행한 후 마지막 forward 상태를 확인한 결과는 아래와 같다.
 

@@ -10,6 +10,10 @@ from unittest import mock
 
 import numpy as np
 
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "legacy"))
+
 import build_cache
 from improve_cv import VARIANTS, select_variants
 
@@ -158,7 +162,7 @@ class TestGainInference(unittest.TestCase):
         # process has already imported LightGBM, and torch alongside it can
         # crash on macOS (see docs/archive/TUNING.md).
         root = pathlib.Path(__file__).resolve().parents[1]
-        completed = subprocess.run([sys.executable, "-c", GAIN_CHECK], cwd=root,
+        completed = subprocess.run([sys.executable, "-c", GAIN_CHECK], cwd=root / "legacy",
                                    capture_output=True, text=True, timeout=120)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         result = json.loads(completed.stdout.strip().splitlines()[-1])

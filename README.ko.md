@@ -92,7 +92,7 @@ LG Aimers 6기 온라인 해커톤 과제로, 난임 환자의 시술 데이터�
 파생된 합성 샘플이 학습 fold에 포함되어 있었다.
 
 대회 후 같은 파이프라인을 모듈로 옮기고, 대회 당시 파라미터를 그대로 사용해 두 평가 방식을
-비교하였다([`evaluate_cv.py`](evaluate_cv.py)). 두 방식은 SMOTE 적용 위치 외에도 아래 항목이 다르다.
+비교하였다([`evaluate_cv.py`](legacy/evaluate_cv.py)). 두 방식은 SMOTE 적용 위치 외에도 아래 항목이 다르다.
 
 - **분할 전 SMOTE (누수 방식)**: 학습 데이터의 80%에 SMOTE를 적용한 후 해당 데이터로
   교차검증. 검증 fold에도 합성 행이 포함되며, fold별 AUC의 평균을 보고
@@ -103,7 +103,7 @@ LG Aimers 6기 온라인 해커톤 과제로, 난임 환자의 시술 데이터�
 동일한 비교를 두 차례 측정하였다.
 
 - **첫 측정**: 대회 당시 GAIN으로 결측을 대체한 데이터(`train_df_imputed.pkl`, 특성 90개)
-  사용([기록](cv_results.json)). 해당 pkl은 대회 데이터로 생성한 파일이므로 공개하지 않고
+  사용([기록](legacy/cv_results.json)). 해당 pkl은 대회 데이터로 생성한 파일이므로 공개하지 않고
   로컬에만 보관
 - **재측정**: 2026-11-14 시점의 코드로 GAIN 캐시를 재생성하여(특성 104개, GAIN 손실 함수
   버그 수정 후, 평가 모드 수정 전) 같은 비교를 다시 수행([기록](results/smote_placement_20261114.json)).
@@ -394,7 +394,7 @@ LightGBM, CatBoost, 결합 모델을 다시 실행한 결과, 결합 모델의 A
 | 경로 | 내용 |
 |---|---|
 | `notebooks/archive/` | 대회 당시 노트북 |
-| `src/`, `main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py` | 대회 후 노트북을 모듈로 옮기고 원인을 하나씩 측정한 코드. 8-1의 문제 일부가 남아 있음 |
+| `legacy/` | 대회 후 노트북을 모듈로 옮기고 원인을 하나씩 측정한 코드(`main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py`, `src/`, `configs/`). 폴더 안에서 실행(`cd legacy`). 8-1의 문제 일부가 남아 있음 |
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | 사후 분석 후 재구축한 누수 없는 워크플로 |
 | `improve_cv.py`, `missing_types_cv.py` | 동일 fold 기반 개선 실험 및 결측 유형별 실험 (5-6, 5-7) |
 | `error_analysis.py` | 저장된 OOF 예측을 이용한 집단별 성능 비교 (5-8) |

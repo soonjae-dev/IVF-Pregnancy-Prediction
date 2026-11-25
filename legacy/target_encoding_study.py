@@ -70,7 +70,7 @@ from src.optimization import model_params
 warnings.filterwarnings("ignore")
 
 SEED = 42
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 FEATURE = "연령대 평균 임신 성공률"   # "average pregnancy success rate by age band"
 MODELS = ["lgb", "xgb"]
 VARIANTS = ["global", "oof", "dropped", "onehot"]

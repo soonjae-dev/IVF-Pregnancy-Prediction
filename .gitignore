@@ -26,9 +26,9 @@ logs/
 data/column_cache/
 
 # Optuna study database and interim leaders. The referee comparison is kept,
-# because it is the evidence for whatever ends up in configs/.
-tuning/*
-!tuning/referee.json
+# because it is the evidence for whatever ends up in legacy/configs/.
+legacy/tuning/*
+!legacy/tuning/referee.json
 .venv/
 .venv-legacy/
 

@@ -112,13 +112,13 @@ to `configs/*.json` in old metadata describe the repository state at that time.
 
 | Report | Historical experiment |
 |---|---|
-| [cv_results.json](../cv_results.json) | SMOTE before CV versus within training folds; `honest` names only the latter estimator-stage protocol. |
+| [cv_results.json](../legacy/cv_results.json) | SMOTE before CV versus within training folds; `honest` names only the latter estimator-stage protocol. |
 | [results/smote_placement_20261114.json](../results/smote_placement_20261114.json) | The same comparison re-run on a rebuilt cache; see [above](#comparison-with-the-competition-pipeline). |
-| [ensemble_study.json](../ensemble_study.json) | Single models and ensemble variants on the shared representation. |
-| [resampling_study.json](../resampling_study.json) | Resampling and class weighting comparisons. |
-| [target_encoding_study.json](../target_encoding_study.json) | Age encoding variants; small score differences do not establish the absence of leakage. |
-| [column_study.json](../column_study.json) | Individual and combined categorical-column variants. |
-| [tuning/referee.json](../tuning/referee.json) | Historical parameter adoption comparison downstream of shared preprocessing. |
+| [ensemble_study.json](../legacy/ensemble_study.json) | Single models and ensemble variants on the shared representation. |
+| [resampling_study.json](../legacy/resampling_study.json) | Resampling and class weighting comparisons. |
+| [target_encoding_study.json](../legacy/target_encoding_study.json) | Age encoding variants; small score differences do not establish the absence of leakage. |
+| [column_study.json](../legacy/column_study.json) | Individual and combined categorical-column variants. |
+| [tuning/referee.json](../legacy/tuning/referee.json) | Historical parameter adoption comparison downstream of shared preprocessing. |
 
 ## Recreating and inspecting artifacts
 

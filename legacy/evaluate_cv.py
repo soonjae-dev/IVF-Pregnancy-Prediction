@@ -22,7 +22,7 @@ the supported baseline reproduction workflow.
 
 Usage (run from the repository root with the legacy dependencies):
   python evaluate_cv.py                        # the shared cache
-  python evaluate_cv.py --data data/train.csv  # historical alternative input
+  python evaluate_cv.py --data ../data/train.csv  # historical alternative input
 """
 
 import argparse
@@ -53,7 +53,7 @@ warnings.filterwarnings("ignore")
 
 # The target keeps its Korean name, as it appears in the competition file.
 TARGET = "임신 성공 여부"   # "pregnancy success"
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 SEED = 42
 
 

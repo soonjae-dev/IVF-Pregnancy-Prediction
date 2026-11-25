@@ -42,7 +42,7 @@ warnings.filterwarnings("ignore")
 
 SEED = 42
 SPLIT_SEED = 20250913     # must match tune.py, or the referee has seen the data
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 TUNED = pathlib.Path("tuning/best_params")
 CONFIGS = pathlib.Path("configs")
 MODELS = ["xgb", "lgb", "rf", "cat"]

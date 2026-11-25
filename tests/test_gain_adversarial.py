@@ -3,6 +3,11 @@ import unittest
 
 import torch
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "legacy"))
+
 from src.gain_imputer import generator_adversarial_loss
 
 

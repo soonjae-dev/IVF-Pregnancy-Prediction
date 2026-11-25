@@ -49,7 +49,7 @@ warnings.filterwarnings("ignore")
 
 TARGET = "임신 성공 여부"
 SEED = 42
-CACHE_DIR = pathlib.Path("data/column_cache")
+CACHE_DIR = pathlib.Path("../data/column_cache")
 BASE_ENCODE = ["시술 유형_원본", "시술 당시 나이"]
 
 # Every object column drop_unused_object_columns currently discards, except

@@ -55,7 +55,7 @@ warnings.filterwarnings("ignore")
 
 TARGET = "임신 성공 여부"   # "pregnancy success"
 SEED = 42
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 BASE_MODELS = ["xgb", "lgb", "cat", "rf"]
 
 

@@ -22,5 +22,5 @@ cells as the supported prediction interface.
 For the supported experiment, run `baseline_cv.py` from the repository root using
 the [reproduction instructions](../REPRODUCE.md). The notebook is not required
 for baseline installation, training, OOF analysis or the missingness comparison.
-The full `requirements.txt` records dependencies of the legacy scripts; it does
+The full `legacy/requirements.txt` records dependencies of the legacy scripts; it does
 not establish that this archived notebook runs unchanged on a new environment.

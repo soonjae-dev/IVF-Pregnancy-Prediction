@@ -95,7 +95,7 @@ training folds contained synthetic rows derived from samples in the validation f
 
 After the competition I moved the pipeline into modules and, keeping the
 competition-time parameters, compared two evaluation protocols
-([`evaluate_cv.py`](evaluate_cv.py)). They differ in more than where SMOTE is applied:
+([`evaluate_cv.py`](legacy/evaluate_cv.py)). They differ in more than where SMOTE is applied:
 
 - **SMOTE before split (leaky)**: SMOTE is applied to 80% of the training data and that
   resampled data is cross-validated. Validation folds also contain synthetic rows, and the
@@ -108,7 +108,7 @@ competition-time parameters, compared two evaluation protocols
 I measured this comparison twice.
 
 - **First measurement**: on the competition-time GAIN-imputed data
-  (`train_df_imputed.pkl`, 90 features) ([record](cv_results.json)). The pkl is kept
+  (`train_df_imputed.pkl`, 90 features) ([record](legacy/cv_results.json)). The pkl is kept
   locally and not published, because it is derived from the competition data.
 - **Re-measurement**: on a GAIN cache rebuilt with the code as of 2026-11-14 (104 features,
   after the GAIN loss fixes and before the later evaluation-mode fix), running the same
@@ -434,7 +434,7 @@ saved, and given a load-and-predict path for new data ([details](docs/FINAL_MODE
 | Path | Contents |
 |---|---|
 | `notebooks/archive/` | Competition-time notebook |
-| `src/`, `main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py` | The notebook moved into modules after the competition, plus code that measured each cause. Some issues from 8-1 remain |
+| `legacy/` | The notebook moved into modules after the competition (`main.py`, `build_cache.py`, `evaluate_cv.py`, `*_study.py`, `tune.py`, `validate_tuning.py`, `src/`, `configs/`), plus code that measured each cause. Run from inside the folder (`cd legacy`). Some issues from 8-1 remain |
 | `baseline_cv.py`, `compare_missingness.py`, `analyze_oof.py` | Leak-free workflow rebuilt after the review |
 | `improve_cv.py`, `missing_types_cv.py` | Improvement and missing-value-type experiments on the same folds (5-6, 5-7) |
 | `error_analysis.py` | Subgroup comparison from the saved out-of-fold predictions (5-8) |

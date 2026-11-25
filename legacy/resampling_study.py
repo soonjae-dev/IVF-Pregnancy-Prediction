@@ -14,7 +14,7 @@ ROC-AUC comes from pooled out-of-fold probabilities. F1 uses a threshold chosen
 on a calibration split carved out of each training fold, so the validation fold
 is never used for any tuning decision.
 
-The imputed matrix is cached to data/gain_cache.npz, because GAIN takes a few
+The imputed matrix is cached to ../data/gain_cache.npz, because GAIN takes a few
 minutes and the comparison does not depend on re-running it.
 
 Usage:
@@ -45,7 +45,7 @@ warnings.filterwarnings("ignore")
 
 TARGET = "임신 성공 여부"   # "pregnancy success"
 SEED = 42
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 
 
 def log(message):

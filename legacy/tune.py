@@ -48,7 +48,7 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 SEED = 42
 SPLIT_SEED = 20250913        # the 75/25 split; changing it invalidates the referee
 TUNING_CV_SEED = 1337        # inner folds, deliberately not the evaluation seed
-CACHE = pathlib.Path("data/gain_cache.npz")
+CACHE = pathlib.Path("../data/gain_cache.npz")
 STUDY_DB = pathlib.Path("tuning/optuna.db")
 RESULTS = pathlib.Path("tuning/best_params")
 MODELS = ["xgb", "lgb", "rf", "cat"]

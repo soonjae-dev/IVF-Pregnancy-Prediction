@@ -39,7 +39,7 @@ from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
 
 TARGET = "임신 성공 여부"
-CACHE = "data/gain_cache.npz"
+CACHE = "../data/gain_cache.npz"
 
 
 def load_config(config_path: str = "configs/config.json") -> dict:

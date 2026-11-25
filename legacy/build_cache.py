@@ -26,7 +26,7 @@ importing it. Importing this module does NOT import torch.
 Usage:
   python build_cache.py                          # the pipeline's default columns
   python build_cache.py --force                  # rebuild even if cached
-  python build_cache.py --out data/other.npz --encode "시술 유형_원본" --encode "시술 당시 나이"
+  python build_cache.py --out ../data/other.npz --encode "시술 유형_원본" --encode "시술 당시 나이"
 """
 
 import argparse
@@ -43,7 +43,7 @@ import numpy as np
 
 TARGET = "임신 성공 여부"
 SEED = 42
-DEFAULT_CACHE = pathlib.Path("data/gain_cache.npz")
+DEFAULT_CACHE = pathlib.Path("../data/gain_cache.npz")
 
 
 def log(message):

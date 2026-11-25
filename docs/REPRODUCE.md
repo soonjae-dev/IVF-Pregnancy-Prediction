@@ -40,14 +40,16 @@ intact, scores are finite, recorded hashes and metrics match the saved files, sp
 seed 42 reproduces `missing_types_cv.py`, and the final model's predictions survive a
 save and reload. Without CatBoost and Optuna these tests are skipped.
 
-The full `requirements.txt` is optional for the legacy training, tuning and study
+The full `legacy/requirements.txt` is optional for the legacy training, tuning and study
 scripts. Install it in a separate virtual environment rather than on top of the baseline
 environment: it adds XGBoost, imbalanced-learn, skorch and a pinned PyTorch, and without
-them `main.py`, `evaluate_cv.py` and the `*_study.py` scripts fail at import.
+them `main.py`, `evaluate_cv.py` and the `*_study.py` scripts fail at import. The legacy
+scripts live in `legacy/` and are run from inside that folder (`cd legacy`); they read
+the data from `../data/`.
 
 ```bash
 uv venv --python 3.11 .venv-legacy        # or: python3.11 -m venv .venv-legacy
-uv pip install --python .venv-legacy/bin/python -r requirements.txt
+uv pip install --python .venv-legacy/bin/python -r legacy/requirements.txt
 ```
 
 `.venv-legacy/` is ignored by Git. On 2026-11-15 this environment imported every legacy
